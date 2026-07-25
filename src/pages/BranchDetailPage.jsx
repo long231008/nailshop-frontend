@@ -29,12 +29,8 @@ export default function BranchDetailPage() {
 
   useEffect(() => {
     api
-      .listBranches()
-      .then((branches) => {
-        const found = branches.find((b) => b.id === branchId)
-        if (!found) throw new Error('Branch not found')
-        setBranch(found)
-      })
+      .getBranch(branchId)
+      .then(setBranch)
       .catch((err) => setError(err.message))
   }, [branchId])
 
@@ -45,8 +41,8 @@ export default function BranchDetailPage() {
 
   return (
     <div className="container">
-      <Link to="/" className="muted">
-        ← All branches
+      <Link to="/" className="back-link">
+        ← All salons
       </Link>
       <h1>{branch.name}</h1>
       {branch.address && <p className="muted">{branch.address}</p>}

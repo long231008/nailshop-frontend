@@ -7,7 +7,7 @@ export default function Header() {
   return (
     <header className="header">
       <Link to="/" className="header-brand">
-        nailshop
+        nail<em>shop</em>
       </Link>
       <nav className="header-nav">
         {auth ? (

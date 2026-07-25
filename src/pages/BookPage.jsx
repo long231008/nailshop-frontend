@@ -25,10 +25,8 @@ export default function BookPage() {
 
   useEffect(() => {
     api
-      .listBranches()
-      .then((branches) => {
-        const foundBranch = branches.find((b) => b.id === branchId)
-        if (!foundBranch) throw new Error('Branch not found')
+      .getBranch(branchId)
+      .then((foundBranch) => {
         const foundService = foundBranch.services.find((s) => s.id === serviceId)
         if (!foundService) throw new Error('Service not found')
         setBranch(foundBranch)
@@ -96,9 +94,10 @@ export default function BookPage() {
             {new Date(selectedTime.start_time).toLocaleString()} has been submitted.
           </p>
           <p className="muted">
-            Status: <span className="badge">{booking.status}</span> - the salon will confirm and
-            send you a deposit link shortly.
+            Status: <span className="badge badge-pending">{booking.status}</span> — the salon will
+            confirm it and send you a deposit link. You can pay the deposit from your account page.
           </p>
+          {booking.gift_message && <p>{booking.gift_message}</p>}
           <Link to="/me" className="btn">
             View my bookings
           </Link>
@@ -109,10 +108,10 @@ export default function BookPage() {
 
   return (
     <div className="container container-narrow">
-      <Link to={`/branches/${branchId}`} className="muted">
+      <Link to={`/branches/${branchId}`} className="back-link">
         ← Back to {branch.name}
       </Link>
-      <h1>Book: {service.name}</h1>
+      <h1>{service.name}</h1>
       <p className="muted">
         {branch.name} · £{service.base_price} · {service.duration_min} min
       </p>
@@ -121,7 +120,7 @@ export default function BookPage() {
         <div className="card">
           <p>Please log in to book an appointment.</p>
           <Link
-            to={`/login?next=/book?branchId=${branchId}&serviceId=${serviceId}`}
+            to={`/login?next=/book?branchId=${branchId}%26serviceId=${serviceId}`}
             className="btn"
           >
             Log in

@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import Footer from './components/Footer'
 import Header from './components/Header'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import BookPage from './pages/BookPage'
@@ -21,6 +22,7 @@ function App() {
         <Route path="/me" element={<MyAccountPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
+      <Footer />
     </>
   )
 }

@@ -36,15 +36,17 @@ async function request(path, { method = 'GET', body, token } = {}) {
 
 export const api = {
   listBranches: () => request('/app/branches'),
+  getBranch: (branchId) => request(`/app/branches/${branchId}`),
   listServices: (branchId) => request(`/app/services?branch_id=${branchId}`),
-  register: (payload) => request('/app/auth/register', { method: 'POST', body: payload }),
-  login: (payload) => request('/app/auth/login', { method: 'POST', body: payload }),
+  requestOtp: (payload) => request('/app/auth/request-otp', { method: 'POST', body: payload }),
   verifyOtp: (payload) => request('/app/auth/verify', { method: 'POST', body: payload }),
   googleLoginUrl: () => `${API_BASE_URL}/app/auth/google/login`,
   getAvailability: (params, token) =>
     request(`/app/availability?${new URLSearchParams(params).toString()}`, { token }),
   createBooking: (payload, token) =>
     request('/app/bookings', { method: 'POST', body: payload, token }),
+  cancelBooking: (bookingId, token) =>
+    request(`/app/bookings/${bookingId}/cancel`, { method: 'POST', token }),
   myBookings: (token) => request('/app/me/bookings', { token }),
   myProfile: (token) => request('/app/me', { token }),
   updateMyProfile: (payload, token) =>
