@@ -1,0 +1,10 @@
+#status {
+  max-width: 600px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  font-family: system-ui, sans-serif;
+}
+
+.error {
+  color: #d33;
+}
