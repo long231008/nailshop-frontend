@@ -130,9 +130,14 @@ export default function LoginPage() {
 
       <div className="divider">or</div>
 
-      <a href={api.googleLoginUrl()} className="btn btn-outline google-btn">
-        Continue with Google
-      </a>
+      <div className="social-stack">
+        <a href={api.googleLoginUrl()} className="btn btn-outline google-btn">
+          Continue with Google
+        </a>
+        <a href={api.facebookLoginUrl()} className="btn btn-outline google-btn">
+          Continue with Facebook
+        </a>
+      </div>
     </div>
   )
 }

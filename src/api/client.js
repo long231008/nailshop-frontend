@@ -41,6 +41,7 @@ export const api = {
   requestOtp: (payload) => request('/app/auth/request-otp', { method: 'POST', body: payload }),
   verifyOtp: (payload) => request('/app/auth/verify', { method: 'POST', body: payload }),
   googleLoginUrl: () => `${API_BASE_URL}/app/auth/google/login`,
+  facebookLoginUrl: () => `${API_BASE_URL}/app/auth/facebook/login`,
   getAvailability: (params, token) =>
     request(`/app/availability?${new URLSearchParams(params).toString()}`, { token }),
   createBooking: (payload, token) =>

@@ -2,6 +2,26 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 
+const CATEGORY_SHORT_LABELS = {
+  polish: 'Polish',
+  gel: 'Gel',
+  full_set: 'Acrylics',
+  infill: 'Infills',
+  removal: 'Removal',
+  biab: 'BIAB',
+  addon: 'Nail Art',
+  hydro_head_massage: 'Head Spa',
+}
+
+function serviceSummary(services) {
+  const seen = []
+  for (const service of services) {
+    const label = CATEGORY_SHORT_LABELS[service.category] || service.category
+    if (!seen.includes(label)) seen.push(label)
+  }
+  return seen.join(' · ')
+}
+
 export default function BranchesPage() {
   const [branches, setBranches] = useState(null)
   const [error, setError] = useState(null)
@@ -37,6 +57,9 @@ export default function BranchesPage() {
                   <h2>{branch.name}</h2>
                   {branch.address && <p className="muted">{branch.address}</p>}
                   {branch.phone_number && <p className="muted">{branch.phone_number}</p>}
+                  {branch.services.length > 0 && (
+                    <p className="branch-card-services">{serviceSummary(branch.services)}</p>
+                  )}
                   <span className="muted">{branch.services.length} treatments</span>
                   <span className="branch-card-cta">View services →</span>
                 </Link>

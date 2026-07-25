@@ -417,6 +417,15 @@ select {
   margin-bottom: 0.1rem;
 }
 
+.branch-card-services {
+  margin: 0.45rem 0 0.1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green-soft);
+}
+
 .branch-card-cta {
   margin-top: 0.9rem;
   font-size: 0.85rem;
@@ -645,4 +654,10 @@ select {
 
 .google-btn {
   width: 100%;
+}
+
+.social-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
 }
