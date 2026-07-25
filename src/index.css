@@ -652,6 +652,12 @@ select {
   margin-bottom: 0.2rem;
 }
 
+.footer-legal {
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
 .google-btn {
   width: 100%;
 }
