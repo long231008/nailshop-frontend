@@ -12,6 +12,7 @@ export default function Header() {
       <nav className="header-nav">
         {auth ? (
           <>
+            {auth.role === 'admin' && <Link to="/dashboard">Dashboard</Link>}
             <Link to="/me">My account</Link>
             <button className="btn btn-outline header-logout" onClick={logout}>
               Log out

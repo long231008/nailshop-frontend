@@ -4,7 +4,7 @@ import { api, ApiError } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login: setAuthSession } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const next = searchParams.get('next') || '/'
@@ -16,22 +16,26 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  const handleRegister = async (e) => {
+  const handleSendCode = async (e) => {
     e.preventDefault()
     setError(null)
     setBusy(true)
     try {
-      const result = await api.register({ phone_number: phone })
+      // New phone number -> register. Already-active account -> log back in.
+      let result
+      try {
+        result = await api.register({ phone_number: phone })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 409) {
+          result = await api.login({ phone_number: phone })
+        } else {
+          throw err
+        }
+      }
       setPendingId(result.pending_id)
       setStep('otp')
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setError(
-          'This phone number is already registered. Please use "Continue with Google" instead.'
-        )
-      } else {
-        setError(err.message)
-      }
+      setError(err.message)
     } finally {
       setBusy(false)
     }
@@ -43,7 +47,7 @@ export default function LoginPage() {
     setBusy(true)
     try {
       const result = await api.verifyOtp({ pending_id: pendingId, otp_code: otp })
-      login(result)
+      setAuthSession(result)
       navigate(next)
     } catch (err) {
       setError(err.message)
@@ -57,7 +61,7 @@ export default function LoginPage() {
       <h1>Log in</h1>
 
       {step === 'phone' && (
-        <form onSubmit={handleRegister} className="card form-stack">
+        <form onSubmit={handleSendCode} className="card form-stack">
           <label>
             Phone number
             <input

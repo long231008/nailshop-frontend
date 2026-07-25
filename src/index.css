@@ -294,3 +294,57 @@ button, input {
   margin-top: 2rem;
   text-align: left;
 }
+
+.branch-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+  max-width: 240px;
+  margin-bottom: 1rem;
+}
+
+.dash-heading {
+  text-align: left;
+  color: var(--green);
+  margin-top: 2rem;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 0.3rem;
+}
+
+.revenue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  text-align: left;
+}
+
+.revenue-grid h3 {
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  min-width: 110px;
+}
+
+.stat-tile strong {
+  font-size: 1.2rem;
+  color: var(--green);
+}

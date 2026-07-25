@@ -4,6 +4,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage'
 import BookPage from './pages/BookPage'
 import BranchDetailPage from './pages/BranchDetailPage'
 import BranchesPage from './pages/BranchesPage'
+import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MyAccountPage from './pages/MyAccountPage'
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/me" element={<MyAccountPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
     </>
   )
