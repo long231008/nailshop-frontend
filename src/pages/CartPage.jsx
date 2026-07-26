@@ -5,9 +5,14 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 const DAILY_LIMIT_MINUTES = 120
+const FACEBOOK_PAGE_URL = import.meta.env.VITE_FACEBOOK_PAGE_URL
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function isSunday(dateStr) {
+  return new Date(`${dateStr}T00:00`).getDay() === 0
 }
 
 function horizonIso() {
@@ -43,6 +48,7 @@ export default function CartPage() {
     if (!cart || !date || overDailyLimit) return
     setSlots(null)
     setSelectedSlot(null)
+    if (isSunday(date)) return
     api
       .getAvailability({
         branch_id: cart.branchId,
@@ -191,8 +197,27 @@ export default function CartPage() {
             />
           </label>
 
-          {slots === null && <p className="muted">Loading available times...</p>}
-          {slots !== null && slotsByTime.length === 0 && (
+          {isSunday(date) && (
+            <div className="gift-banner">
+              We&apos;re closed on Sundays. For a Sunday appointment, please message us on our
+              Facebook page
+              {FACEBOOK_PAGE_URL ? (
+                <>
+                  {': '}
+                  <a href={FACEBOOK_PAGE_URL} target="_blank" rel="noreferrer">
+                    send us a message
+                  </a>
+                </>
+              ) : (
+                '.'
+              )}
+            </div>
+          )}
+
+          {!isSunday(date) && slots === null && (
+            <p className="muted">Loading available times...</p>
+          )}
+          {!isSunday(date) && slots !== null && slotsByTime.length === 0 && (
             <p className="muted">
               No time can fit all {totals.count} treatments on this date. Try another day.
             </p>
