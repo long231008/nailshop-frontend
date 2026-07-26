@@ -27,6 +27,10 @@ async function request(path, { method = 'GET', body, token } = {}) {
     } catch {
       // response had no JSON body
     }
+    if (res.status === 401 && token) {
+      // Session expired: let AuthContext clear it and bounce to the login page.
+      window.dispatchEvent(new Event('nailshop:session-expired'))
+    }
     throw new ApiError(res.status, detail)
   }
 

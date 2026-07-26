@@ -23,6 +23,13 @@ export function AuthProvider({ children }) {
     }
   }, [auth])
 
+  // Fired by the API client on a 401: the token has expired or been revoked.
+  useEffect(() => {
+    const onExpired = () => setAuth(null)
+    window.addEventListener('nailshop:session-expired', onExpired)
+    return () => window.removeEventListener('nailshop:session-expired', onExpired)
+  }, [])
+
   const login = ({ access_token, user_id, role }) => {
     setAuth({ token: access_token, userId: user_id, role })
   }
