@@ -44,6 +44,7 @@ export default function SchedulePage() {
   const [branches, setBranches] = useState([])
   const [branchId, setBranchId] = useState('')
   const [schedule, setSchedule] = useState(null)
+  const [requests, setRequests] = useState([])
   const [error, setError] = useState(null)
   const [approvingId, setApprovingId] = useState(null)
   const [now, setNow] = useState(new Date())
@@ -62,6 +63,10 @@ export default function SchedulePage() {
       .dailySchedule(params, auth.token)
       .then(setSchedule)
       .catch((err) => setError(err.message))
+    api
+      .pendingBookings(branchId || null, auth.token)
+      .then(setRequests)
+      .catch(() => {})
   }, [auth, date, branchId])
 
   useEffect(() => {
@@ -182,20 +187,29 @@ export default function SchedulePage() {
               <strong>£{schedule.expected_value.toFixed(2)}</strong>
             </div>
             <div className="stat-tile">
-              <span className="muted">Needs attention</span>
-              <strong>{schedule.pending.length}</strong>
+              <span className="muted">Open requests</span>
+              <strong>{requests.length}</strong>
             </div>
           </div>
 
-          {schedule.pending.length > 0 && (
+          {requests.length > 0 && (
             <section className="pending-section">
-              <h2 className="dash-heading">Needs attention</h2>
+              <h2 className="dash-heading">Booking requests — all dates</h2>
+              <p className="muted">
+                Every upcoming request, however far ahead. Approved bookings appear on the day
+                grid automatically once their deposit is paid.
+              </p>
               <div className="service-list">
-                {schedule.pending.map((p, i) => (
+                {requests.map((p, i) => (
                   <div key={`${p.booking_id}-${i}`} className="card service-row">
                     <div className="service-row-info">
                       <strong>
-                        {fmtTime(p.start_time)} · {p.service_name}
+                        {new Date(p.start_time).toLocaleDateString([], {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                        })}{' '}
+                        · {fmtTime(p.start_time)} · {p.service_name}
                       </strong>
                       <p className="muted">
                         {p.customer_name || 'Customer'}
