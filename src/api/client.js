@@ -61,6 +61,8 @@ export const api = {
     request(`/app/admin/users/${userId}/grant-staff`, { method: 'POST', body: payload, token }),
   revokeStaff: (userId, token) =>
     request(`/app/admin/users/${userId}/revoke-staff`, { method: 'POST', token }),
+  deleteUser: (userId, token) =>
+    request(`/app/admin/users/${userId}`, { method: 'DELETE', token }),
   setSlotLockPermission: (staffId, enabled, token) =>
     request(`/app/admin/staff/${staffId}/slot-lock-permission`, {
       method: 'POST',

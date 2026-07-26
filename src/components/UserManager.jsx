@@ -68,6 +68,27 @@ export default function UserManager({ branches, token }) {
     }
   }
 
+  const submitDelete = async (user) => {
+    const label = user.phone_number || user.email || user.id
+    const confirmed = window.confirm(
+      `Delete the account ${label}?\n\n` +
+        'Accounts with booking history are anonymized (personal data removed, ' +
+        'login blocked) so revenue records stay intact; accounts with no history ' +
+        'are removed completely. This cannot be undone.'
+    )
+    if (!confirmed) return
+    setError(null)
+    setBusy(true)
+    try {
+      await api.deleteUser(user.id, token)
+      reload()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const branchName = (id) => branches.find((b) => b.id === id)?.name || 'Unknown branch'
 
   return (
@@ -128,6 +149,15 @@ export default function UserManager({ branches, token }) {
                     onClick={() => submitRevoke(user.id)}
                   >
                     Revoke staff
+                  </button>
+                )}
+                {user.role !== 'admin' && (
+                  <button
+                    className="btn btn-danger-outline"
+                    disabled={busy}
+                    onClick={() => submitDelete(user)}
+                  >
+                    Delete
                   </button>
                 )}
               </div>
