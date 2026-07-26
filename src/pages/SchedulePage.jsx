@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
@@ -46,7 +46,6 @@ export default function SchedulePage() {
   const [schedule, setSchedule] = useState(null)
   const [requests, setRequests] = useState([])
   const [error, setError] = useState(null)
-  const [approvingId, setApprovingId] = useState(null)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -86,19 +85,6 @@ export default function SchedulePage() {
   const isToday = date === toIso(new Date())
   const nowMinutes = now.getHours() * 60 + now.getMinutes() - OPEN_HOUR * 60
   const showNowLine = isToday && nowMinutes >= 0 && nowMinutes <= (CLOSE_HOUR - OPEN_HOUR) * 60
-
-  const handleApprove = async (bookingId) => {
-    setApprovingId(bookingId)
-    setError(null)
-    try {
-      await api.approveBooking(bookingId, auth.token)
-      reload()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setApprovingId(null)
-    }
-  }
 
   // One column per staff member appearing that day (unassigned work gets its own).
   const columns = []
@@ -182,10 +168,12 @@ export default function SchedulePage() {
               <span className="muted">On the book</span>
               <strong>{schedule.appointment_count}</strong>
             </div>
-            <div className="stat-tile">
-              <span className="muted">Expected value</span>
-              <strong>£{schedule.expected_value.toFixed(2)}</strong>
-            </div>
+            {schedule.expected_value != null && (
+              <div className="stat-tile">
+                <span className="muted">Expected value</span>
+                <strong>£{schedule.expected_value.toFixed(2)}</strong>
+              </div>
+            )}
             <div className="stat-tile">
               <span className="muted">Open requests</span>
               <strong>{requests.length}</strong>
@@ -193,51 +181,10 @@ export default function SchedulePage() {
           </div>
 
           {requests.length > 0 && (
-            <section className="pending-section">
-              <h2 className="dash-heading">Booking requests — all dates</h2>
-              <p className="muted">
-                Every upcoming request, however far ahead. Approved bookings appear on the day
-                grid automatically once their deposit is paid.
-              </p>
-              <div className="service-list">
-                {requests.map((p, i) => (
-                  <div key={`${p.booking_id}-${i}`} className="card service-row">
-                    <div className="service-row-info">
-                      <strong>
-                        {new Date(p.start_time).toLocaleDateString([], {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        })}{' '}
-                        · {fmtTime(p.start_time)} · {p.service_name}
-                      </strong>
-                      <p className="muted">
-                        {p.customer_name || 'Customer'}
-                        {p.customer_phone ? ` · ${p.customer_phone}` : ''}
-                        {p.staff_name ? ` · with ${p.staff_name}` : ''}
-                        {!branchId && branchName(p.branch_id)
-                          ? ` · ${branchName(p.branch_id)}`
-                          : ''}
-                      </p>
-                    </div>
-                    <div className="service-row-action">
-                      <span className="service-price">£{p.price}</span>
-                      {p.stage === 'awaiting_approval' ? (
-                        <button
-                          className="btn btn-gold"
-                          disabled={approvingId === p.booking_id}
-                          onClick={() => handleApprove(p.booking_id)}
-                        >
-                          {approvingId === p.booking_id ? 'Approving...' : 'Approve'}
-                        </button>
-                      ) : (
-                        <span className="badge badge-pending">awaiting deposit</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <p className="muted" style={{ textAlign: 'left' }}>
+              {requests.length} open {requests.length === 1 ? 'request' : 'requests'} — see the{' '}
+              <Link to="/requests">Requests</Link> page to approve them.
+            </p>
           )}
 
           {columns.length === 0 && (

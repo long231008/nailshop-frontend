@@ -8,6 +8,7 @@ import CartPage from './pages/CartPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MyAccountPage from './pages/MyAccountPage'
+import RequestsPage from './pages/RequestsPage'
 import SchedulePage from './pages/SchedulePage'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/me" element={<MyAccountPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
+        <Route path="/requests" element={<RequestsPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
       <Footer />
