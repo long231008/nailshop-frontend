@@ -729,6 +729,46 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+.user-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.user-filters input[type='search'] {
+  flex: 2;
+}
+
+.user-filters select {
+  flex: 1;
+  max-width: 180px;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+.grant-form {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.grant-form .input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.grant-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .lock-time-row {
   display: flex;
   gap: 0.75rem;

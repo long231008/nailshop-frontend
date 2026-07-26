@@ -55,6 +55,12 @@ export const api = {
   giftPreview: (branchId, total) =>
     request(`/app/discounts/gift-preview?branch_id=${branchId}&total=${total}`),
   listStaff: (branchId, token) => request(`/app/staff?branch_id=${branchId}`, { token }),
+  listUsers: (params, token) =>
+    request(`/app/admin/users?${new URLSearchParams(params).toString()}`, { token }),
+  grantStaff: (userId, payload, token) =>
+    request(`/app/admin/users/${userId}/grant-staff`, { method: 'POST', body: payload, token }),
+  revokeStaff: (userId, token) =>
+    request(`/app/admin/users/${userId}/revoke-staff`, { method: 'POST', token }),
   setSlotLockPermission: (staffId, enabled, token) =>
     request(`/app/admin/staff/${staffId}/slot-lock-permission`, {
       method: 'POST',
