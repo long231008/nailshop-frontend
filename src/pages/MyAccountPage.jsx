@@ -13,6 +13,8 @@ export default function MyAccountPage() {
   const [error, setError] = useState(null)
 
   const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [surname, setSurname] = useState('')
   const [saveMsg, setSaveMsg] = useState(null)
   const [saving, setSaving] = useState(false)
   const [cancellingId, setCancellingId] = useState(null)
@@ -30,6 +32,8 @@ export default function MyAccountPage() {
       .then((data) => {
         setProfile(data)
         setEmail(data.email || '')
+        setFirstName(data.first_name || '')
+        setSurname(data.surname || '')
       })
       .catch((err) => setError(err.message))
     loadBookings()
@@ -50,7 +54,10 @@ export default function MyAccountPage() {
     setSaveMsg(null)
     setSaving(true)
     try {
-      const updated = await api.updateMyProfile({ email }, auth.token)
+      const payload = { email: email || null }
+      if (firstName.trim()) payload.first_name = firstName.trim()
+      if (surname.trim()) payload.surname = surname.trim()
+      const updated = await api.updateMyProfile(payload, auth.token)
       setProfile(updated)
       setSaveMsg('Saved.')
     } catch (err) {
@@ -83,6 +90,30 @@ export default function MyAccountPage() {
           <h2>Profile</h2>
           <p className="muted">Phone: {profile.phone_number || '-'}</p>
           <form onSubmit={handleSave} className="form-stack">
+            <div className="lock-time-row">
+              <label>
+                First name
+                <input
+                  className="input"
+                  type="text"
+                  maxLength={100}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Lan"
+                />
+              </label>
+              <label>
+                Surname
+                <input
+                  className="input"
+                  type="text"
+                  maxLength={100}
+                  value={surname}
+                  onChange={(e) => setSurname(e.target.value)}
+                  placeholder="Nguyen"
+                />
+              </label>
+            </div>
             <label>
               Email
               <input

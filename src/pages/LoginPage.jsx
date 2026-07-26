@@ -18,6 +18,9 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
+  const [session, setSession] = useState(null)
+  const [firstName, setFirstName] = useState('')
+  const [surname, setSurname] = useState('')
 
   const identifier = method === 'phone' ? phone : email
 
@@ -59,6 +62,13 @@ export default function LoginPage() {
     setBusy(true)
     try {
       const result = await api.verifyOtp({ pending_id: pendingId, otp_code: otp })
+      // New accounts finish by telling us their name before entering the site.
+      const profile = await api.myProfile(result.access_token)
+      if (!profile.first_name) {
+        setSession(result)
+        setStep('name')
+        return
+      }
       setAuthSession(result)
       navigate(next)
     } catch (err) {
@@ -67,6 +77,24 @@ export default function LoginPage() {
       } else {
         setError(err.message)
       }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleSaveName = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setBusy(true)
+    try {
+      await api.updateMyProfile(
+        { first_name: firstName.trim(), surname: surname.trim() },
+        session.access_token
+      )
+      setAuthSession(session)
+      navigate(next)
+    } catch (err) {
+      setError(err.message)
     } finally {
       setBusy(false)
     }
@@ -161,6 +189,41 @@ export default function LoginPage() {
             onClick={requestCode}
           >
             {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+          </button>
+        </form>
+      )}
+
+      {step === 'name' && (
+        <form onSubmit={handleSaveName} className="card form-stack">
+          <p className="muted">Almost there — tell us your name so the salon knows who you are.</p>
+          <label>
+            First name
+            <input
+              className="input"
+              type="text"
+              required
+              maxLength={100}
+              autoFocus
+              placeholder="Lan"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+          </label>
+          <label>
+            Surname
+            <input
+              className="input"
+              type="text"
+              required
+              maxLength={100}
+              placeholder="Nguyen"
+              value={surname}
+              onChange={(e) => setSurname(e.target.value)}
+            />
+          </label>
+          {error && <p className="error-text">{error}</p>}
+          <button className="btn" type="submit" disabled={busy}>
+            {busy ? 'Saving...' : 'Continue'}
           </button>
         </form>
       )}

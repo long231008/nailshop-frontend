@@ -15,6 +15,10 @@ export default function UserManager({ branches, token }) {
   const [grantName, setGrantName] = useState('')
   const [busy, setBusy] = useState(false)
 
+  // Expanded bookings panel, keyed to one user at a time.
+  const [bookingsUserId, setBookingsUserId] = useState(null)
+  const [userBookings, setUserBookings] = useState(null)
+
   const reload = useCallback(() => {
     const params = { limit: 50 }
     if (query.trim()) params.q = query.trim()
@@ -91,6 +95,24 @@ export default function UserManager({ branches, token }) {
 
   const branchName = (id) => branches.find((b) => b.id === id)?.name || 'Unknown branch'
 
+  const fullName = (user) =>
+    [user.first_name, user.surname].filter(Boolean).join(' ') || null
+
+  const toggleBookings = async (userId) => {
+    if (bookingsUserId === userId) {
+      setBookingsUserId(null)
+      return
+    }
+    setBookingsUserId(userId)
+    setUserBookings(null)
+    try {
+      setUserBookings(await api.adminUserBookings(userId, token))
+    } catch (err) {
+      setError(err.message)
+      setBookingsUserId(null)
+    }
+  }
+
   return (
     <>
       <h2 className="dash-heading">User accounts</h2>
@@ -123,8 +145,13 @@ export default function UserManager({ branches, token }) {
           {users.map((user) => (
             <div key={user.id} className="card user-row">
               <div className="service-row-info">
-                <strong>{user.phone_number || user.email || user.id.slice(0, 8)}</strong>
+                <strong>
+                  {fullName(user) || user.phone_number || user.email || user.id.slice(0, 8)}
+                </strong>
                 <p className="muted">
+                  {fullName(user) && (user.phone_number || user.email)
+                    ? `${user.phone_number || user.email} · `
+                    : ''}
                   {user.phone_number && user.email ? `${user.email} · ` : ''}
                   <span className={`badge badge-${user.status}`}>{user.role}</span>
                   {user.staff_display_name && user.staff_status === 'active' && (
@@ -137,6 +164,9 @@ export default function UserManager({ branches, token }) {
               </div>
 
               <div className="service-row-action">
+                <button className="btn btn-outline" onClick={() => toggleBookings(user.id)}>
+                  {bookingsUserId === user.id ? 'Hide bookings' : `Bookings (${user.booking_count})`}
+                </button>
                 {user.role === 'customer' && (
                   <button className="btn btn-outline" onClick={() => startGrant(user)}>
                     Grant staff
@@ -161,6 +191,49 @@ export default function UserManager({ branches, token }) {
                   </button>
                 )}
               </div>
+
+              {bookingsUserId === user.id && (
+                <div className="booking-row-extra user-bookings-panel">
+                  {userBookings === null && <p className="muted">Loading bookings...</p>}
+                  {userBookings?.length === 0 && (
+                    <p className="muted">This account has no bookings.</p>
+                  )}
+                  {userBookings?.length > 0 &&
+                    userBookings.map((b) => (
+                      <div key={b.id} className="user-booking-item">
+                        <div className="service-row-info">
+                          <strong>
+                            {b.booking_date} · {branchName(b.branch_id)}
+                          </strong>
+                          {b.details.map((d, i) => (
+                            <p key={i} className="muted">
+                              {d.service_name}
+                              {d.staff_name ? ` with ${d.staff_name}` : ''} ·{' '}
+                              {new Date(d.start_time).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                              {' – '}
+                              {new Date(d.end_time).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}{' '}
+                              · £{d.price}
+                            </p>
+                          ))}
+                        </div>
+                        <div className="service-row-action">
+                          {b.total_price != null && (
+                            <span className="service-price">£{b.total_price}</span>
+                          )}
+                          <span className={`badge badge-${b.status}`}>
+                            {b.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
 
               {grantingId === user.id && (
                 <div className="booking-row-extra grant-form">

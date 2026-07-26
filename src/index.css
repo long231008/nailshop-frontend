@@ -769,6 +769,25 @@ select {
   gap: 0.5rem;
 }
 
+.user-bookings-panel {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.user-booking-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.user-booking-item:last-child {
+  border-bottom: none;
+}
+
 .lock-time-row {
   display: flex;
   gap: 0.75rem;
