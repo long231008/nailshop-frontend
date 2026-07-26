@@ -893,6 +893,11 @@ select {
   border-color: color-mix(in srgb, var(--danger) 28%, transparent);
 }
 
+.design-thumb-small {
+  width: 56px;
+  height: 56px;
+}
+
 .design-thumb-placeholder {
   display: flex;
   align-items: center;

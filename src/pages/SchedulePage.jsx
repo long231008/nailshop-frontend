@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ImageLightbox from '../components/ImageLightbox'
 import SlotLockManager from '../components/SlotLockManager'
 import { useAuth } from '../context/AuthContext'
 
@@ -42,6 +43,7 @@ export default function SchedulePage() {
   const [requests, setRequests] = useState([])
   const [error, setError] = useState(null)
   const [expanded, setExpanded] = useState(null)
+  const [viewing, setViewing] = useState(null)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -205,6 +207,9 @@ export default function SchedulePage() {
                       {q.items.map((_, i) => (
                         <span key={i} className="occupancy-dot" />
                       ))}
+                      {q.items.some((a) => a.design_image_url || a.design_description) && (
+                        <span className="chip chip-branch">nail art</span>
+                      )}
                     </span>
                     <span className={'occupancy-count' + (busy ? '' : ' muted')}>
                       {busy
@@ -217,6 +222,15 @@ export default function SchedulePage() {
                     <div className="occupancy-detail">
                       {q.items.map((a, i) => (
                         <div key={`${a.booking_id}-${i}`} className="occupancy-detail-row">
+                          {a.design_image_url && (
+                            <img
+                              src={a.design_image_url}
+                              alt="Nail design"
+                              className="design-thumb design-thumb-small design-thumb-clickable"
+                              title="Click to enlarge"
+                              onClick={() => setViewing(a.design_image_url)}
+                            />
+                          )}
                           <div className="service-row-info">
                             <strong>
                               {fmtTime(a.start_time)}–{fmtTime(a.end_time)} · {a.service_name}
@@ -224,11 +238,13 @@ export default function SchedulePage() {
                             <p className="muted">
                               {a.customer_name || 'Customer'}
                               {a.customer_phone ? ` · ${a.customer_phone}` : ''}
-                              {a.staff_name ? ` · with ${a.staff_name}` : ''}
                               {!branchId && branchName(a.branch_id)
                                 ? ` · ${branchName(a.branch_id)}`
                                 : ''}
                             </p>
+                            {a.design_description && (
+                              <p className="muted">Design: {a.design_description}</p>
+                            )}
                           </div>
                           <span className={`badge badge-${a.status}`}>
                             {a.status.replace('_', ' ')}
@@ -241,6 +257,10 @@ export default function SchedulePage() {
               )
             })}
           </div>
+
+          {viewing && (
+            <ImageLightbox src={viewing} alt="Nail design" onClose={() => setViewing(null)} />
+          )}
 
           {branchId ? (
             <SlotLockManager branchId={branchId} token={auth.token} initialDate={date} />

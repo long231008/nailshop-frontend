@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ImageLightbox from '../components/ImageLightbox'
 import { useAuth } from '../context/AuthContext'
 
 const STAFF_ROLES = new Set(['admin', 'staff'])
@@ -23,6 +24,7 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState(null)
   const [error, setError] = useState(null)
   const [approvingId, setApprovingId] = useState(null)
+  const [viewing, setViewing] = useState(null)
 
   useEffect(() => {
     if (!auth || !STAFF_ROLES.has(auth.role)) return
@@ -66,6 +68,15 @@ export default function RequestsPage() {
 
   const renderRow = (p, showApprove) => (
     <div key={p.booking_id + p.start_time} className="card service-row">
+      {p.design_image_url && (
+        <img
+          src={p.design_image_url}
+          alt="Nail design"
+          className="design-thumb design-thumb-small design-thumb-clickable"
+          title="Click to enlarge"
+          onClick={() => setViewing(p.design_image_url)}
+        />
+      )}
       <div className="service-row-info">
         <strong>
           {fmtWhen(p.start_time)} · {p.service_name}
@@ -73,9 +84,9 @@ export default function RequestsPage() {
         <p className="muted">
           {p.customer_name || 'Customer'}
           {p.customer_phone ? ` · ${p.customer_phone}` : ''}
-          {p.staff_name ? ` · with ${p.staff_name}` : ''}
           {!branchId && branchName(p.branch_id) ? ` · ${branchName(p.branch_id)}` : ''}
         </p>
+        {p.design_description && <p className="muted">Design: {p.design_description}</p>}
       </div>
       <div className="service-row-action">
         <span className="service-price">£{p.price}</span>
@@ -149,6 +160,10 @@ export default function RequestsPage() {
             )}
           </section>
         </>
+      )}
+
+      {viewing && (
+        <ImageLightbox src={viewing} alt="Nail design" onClose={() => setViewing(null)} />
       )}
     </div>
   )

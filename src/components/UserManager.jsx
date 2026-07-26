@@ -207,8 +207,7 @@ export default function UserManager({ branches, token }) {
                           </strong>
                           {b.details.map((d, i) => (
                             <p key={i} className="muted">
-                              {d.service_name}
-                              {d.staff_name ? ` with ${d.staff_name}` : ''} ·{' '}
+                              {d.service_name} ·{' '}
                               {new Date(d.start_time).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',
