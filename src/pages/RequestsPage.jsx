@@ -116,24 +116,39 @@ export default function RequestsPage() {
 
       {error && <p className="error-text">{error}</p>}
       {requests === null && !error && <p className="muted">Loading requests...</p>}
-      {requests?.length === 0 && (
-        <div className="card schedule-empty">
-          <p className="muted">No open requests — everything is handled.</p>
-        </div>
-      )}
 
-      {awaitingApproval.length > 0 && (
-        <section className="pending-section">
-          <h2 className="dash-heading">Awaiting approval ({awaitingApproval.length})</h2>
-          <div className="service-list">{awaitingApproval.map((p) => renderRow(p, true))}</div>
-        </section>
-      )}
+      {requests !== null && (
+        <>
+          <section className="pending-section">
+            <h2 className="dash-heading">Awaiting approval ({awaitingApproval.length})</h2>
+            <p className="muted">
+              New requests wait here indefinitely until someone approves them. Approving sends
+              the customer their deposit link on the channel they signed up with.
+            </p>
+            {awaitingApproval.length === 0 ? (
+              <div className="card schedule-empty">
+                <p className="muted">No requests waiting for approval.</p>
+              </div>
+            ) : (
+              <div className="service-list">{awaitingApproval.map((p) => renderRow(p, true))}</div>
+            )}
+          </section>
 
-      {awaitingDeposit.length > 0 && (
-        <section className="pending-section">
-          <h2 className="dash-heading">Awaiting deposit ({awaitingDeposit.length})</h2>
-          <div className="service-list">{awaitingDeposit.map((p) => renderRow(p, false))}</div>
-        </section>
+          <section className="pending-section">
+            <h2 className="dash-heading">Awaiting deposit ({awaitingDeposit.length})</h2>
+            <p className="muted">
+              Approved bookings holding their slot while the deposit arrives (15-minute window).
+              Once paid, they move to the schedule automatically.
+            </p>
+            {awaitingDeposit.length === 0 ? (
+              <div className="card schedule-empty">
+                <p className="muted">No bookings waiting for a deposit.</p>
+              </div>
+            ) : (
+              <div className="service-list">{awaitingDeposit.map((p) => renderRow(p, false))}</div>
+            )}
+          </section>
+        </>
       )}
     </div>
   )
