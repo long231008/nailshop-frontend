@@ -8,6 +8,7 @@ import CartPage from './pages/CartPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MyAccountPage from './pages/MyAccountPage'
+import SchedulePage from './pages/SchedulePage'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/me" element={<MyAccountPage />} />
+        <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
       <Footer />

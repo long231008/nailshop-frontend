@@ -18,6 +18,9 @@ export default function Header() {
         </Link>
         {auth ? (
           <>
+            {(auth.role === 'admin' || auth.role === 'staff') && (
+              <Link to="/schedule">Schedule</Link>
+            )}
             {auth.role === 'admin' && <Link to="/dashboard">Dashboard</Link>}
             <Link to="/me">My account</Link>
             <button className="btn btn-outline header-logout" onClick={logout}>

@@ -820,6 +820,192 @@ select {
   }
 }
 
+/* ---------- daily schedule ---------- */
+
+.schedule-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.schedule-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.schedule-nav-btn {
+  padding: 0.5rem 0.9rem;
+  font-size: 1rem;
+}
+
+.schedule-date {
+  width: auto;
+}
+
+.schedule-branch {
+  max-width: 220px;
+}
+
+.schedule-day {
+  font-style: italic;
+  color: var(--green);
+  text-align: left;
+  margin: 1rem 0 1.25rem;
+}
+
+.schedule-stats {
+  margin-bottom: 1.75rem;
+}
+
+.schedule-empty {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
+  padding-left: 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 86px;
+  width: 2px;
+  background: linear-gradient(var(--gold), color-mix(in srgb, var(--gold) 20%, transparent));
+}
+
+.timeline-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.timeline-time {
+  width: 66px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-top: 0.55rem;
+}
+
+.timeline-start {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.timeline-end {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-dot {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  margin-top: 0.85rem;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--cream);
+  box-shadow: 0 0 0 2px var(--gold);
+}
+
+.timeline-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.95rem 1.2rem;
+  border-left: 3px solid var(--gold);
+}
+
+.timeline-card-main p {
+  margin: 0.15rem 0 0.4rem;
+}
+
+.timeline-card-side {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  white-space: nowrap;
+}
+
+.timeline-chips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  color: var(--green);
+}
+
+.chip-branch {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--gold-dark);
+}
+
+.badge-in_progress {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--gold-dark);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+.badge-completed {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+@media (max-width: 560px) {
+  .timeline::before {
+    display: none;
+  }
+
+  .timeline-dot {
+    display: none;
+  }
+
+  .timeline-row {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .timeline-time {
+    flex-direction: row;
+    gap: 0.5rem;
+    width: auto;
+    align-items: baseline;
+    padding-top: 0;
+  }
+}
+
 /* ---------- footer ---------- */
 
 .footer {
