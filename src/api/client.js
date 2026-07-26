@@ -56,6 +56,10 @@ export const api = {
   myProfile: (token) => request('/app/me', { token }),
   updateMyProfile: (payload, token) =>
     request('/app/me', { method: 'PATCH', body: payload, token }),
+  requestEmailChange: (email, token) =>
+    request('/app/me/email', { method: 'POST', body: { email }, token }),
+  confirmEmailChange: (code, token) =>
+    request('/app/me/email/confirm', { method: 'POST', body: { code }, token }),
   giftPreview: (branchId, total) =>
     request(`/app/discounts/gift-preview?branch_id=${branchId}&total=${total}`),
   listStaff: (branchId, token) => request(`/app/staff?branch_id=${branchId}`, { token }),

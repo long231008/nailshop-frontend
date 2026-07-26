@@ -17,6 +17,12 @@ export default function MyAccountPage() {
   const [surname, setSurname] = useState('')
   const [saveMsg, setSaveMsg] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  // Changing an email is a two-step, verified action of its own.
+  const [emailStep, setEmailStep] = useState('idle')
+  const [emailCode, setEmailCode] = useState('')
+  const [emailMsg, setEmailMsg] = useState(null)
+  const [emailBusy, setEmailBusy] = useState(false)
   const [cancellingId, setCancellingId] = useState(null)
   const [cancelError, setCancelError] = useState(null)
 
@@ -54,7 +60,7 @@ export default function MyAccountPage() {
     setSaveMsg(null)
     setSaving(true)
     try {
-      const payload = { email: email || null }
+      const payload = {}
       if (firstName.trim()) payload.first_name = firstName.trim()
       if (surname.trim()) payload.surname = surname.trim()
       const updated = await api.updateMyProfile(payload, auth.token)
@@ -64,6 +70,39 @@ export default function MyAccountPage() {
       setSaveMsg(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleEmailRequest = async (e) => {
+    e.preventDefault()
+    setEmailMsg(null)
+    setEmailBusy(true)
+    try {
+      await api.requestEmailChange(email.trim(), auth.token)
+      setEmailStep('code')
+      setEmailMsg(`We sent a confirmation code to ${email.trim()}.`)
+    } catch (err) {
+      setEmailMsg(err.message)
+    } finally {
+      setEmailBusy(false)
+    }
+  }
+
+  const handleEmailConfirm = async (e) => {
+    e.preventDefault()
+    setEmailMsg(null)
+    setEmailBusy(true)
+    try {
+      const updated = await api.confirmEmailChange(emailCode.trim(), auth.token)
+      setProfile(updated)
+      setEmail(updated.email || '')
+      setEmailCode('')
+      setEmailStep('idle')
+      setEmailMsg('Email confirmed.')
+    } catch (err) {
+      setEmailMsg(err.message)
+    } finally {
+      setEmailBusy(false)
     }
   }
 
@@ -114,21 +153,79 @@ export default function MyAccountPage() {
                 />
               </label>
             </div>
-            <label>
-              Email
-              <input
-                className="input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-              />
-            </label>
             {saveMsg && <p className="muted">{saveMsg}</p>}
             <button className="btn" type="submit" disabled={saving}>
               {saving ? 'Saving...' : 'Save'}
             </button>
           </form>
+        </div>
+      )}
+
+      {profile && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <h2>Email address</h2>
+          <p className="muted">
+            {profile.email
+              ? `Current: ${profile.email}`
+              : 'No email yet — add one to sign in with Google or Facebook.'}
+          </p>
+
+          {emailStep === 'idle' ? (
+            <form onSubmit={handleEmailRequest} className="form-stack">
+              <label>
+                New email
+                <input
+                  className="input"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </label>
+              {emailMsg && <p className="muted">{emailMsg}</p>}
+              <button
+                className="btn"
+                type="submit"
+                disabled={emailBusy || !email.trim() || email.trim() === profile.email}
+              >
+                {emailBusy ? 'Sending...' : 'Send confirmation code'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleEmailConfirm} className="form-stack">
+              <label>
+                Confirmation code
+                <input
+                  className="input"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  required
+                  autoFocus
+                  placeholder="123456"
+                  value={emailCode}
+                  onChange={(e) => setEmailCode(e.target.value)}
+                />
+              </label>
+              {emailMsg && <p className="muted">{emailMsg}</p>}
+              <div className="lock-actions">
+                <button className="btn" type="submit" disabled={emailBusy}>
+                  {emailBusy ? 'Confirming...' : 'Confirm email'}
+                </button>
+                <button
+                  className="btn btn-outline"
+                  type="button"
+                  onClick={() => {
+                    setEmailStep('idle')
+                    setEmailMsg(null)
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
 
