@@ -9,10 +9,12 @@ export default function Header() {
   const { totals } = useCart()
   const location = useLocation()
   const [requestCount, setRequestCount] = useState(0)
+  const [quotedCount, setQuotedCount] = useState(0)
 
   const isStaff = auth && (auth.role === 'admin' || auth.role === 'staff')
+  const isCustomer = auth && auth.role === 'customer'
 
-  // Refresh the badge on navigation so an approval elsewhere updates it.
+  // Refresh the badges on navigation so changes elsewhere show up.
   useEffect(() => {
     if (!isStaff) {
       setRequestCount(0)
@@ -23,6 +25,19 @@ export default function Header() {
       .then((requests) => setRequestCount(requests.length))
       .catch(() => {})
   }, [isStaff, auth, location])
+
+  // A quoted design waiting for the customer's yes/no shows as a badge - the
+  // on-site signal that their nail art request has an answer.
+  useEffect(() => {
+    if (!isCustomer) {
+      setQuotedCount(0)
+      return
+    }
+    api
+      .myCustomDesigns(auth.token)
+      .then((designs) => setQuotedCount(designs.filter((d) => d.status === 'priced').length))
+      .catch(() => {})
+  }, [isCustomer, auth, location])
 
   return (
     <header className="header">
@@ -36,6 +51,12 @@ export default function Header() {
         </Link>
         {auth ? (
           <>
+            {isCustomer && (
+              <Link to="/designs" className="cart-link">
+                Designs
+                {quotedCount > 0 && <span className="cart-count">{quotedCount}</span>}
+              </Link>
+            )}
             {isStaff && <Link to="/schedule">Schedule</Link>}
             {isStaff && (
               <Link to="/requests" className="cart-link">
