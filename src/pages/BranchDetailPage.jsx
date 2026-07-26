@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
+import DesignRequestModal from '../components/DesignRequestModal'
 import { useCart } from '../context/CartContext'
 
 const CATEGORY_LABELS = {
@@ -25,10 +26,11 @@ function groupByCategory(services) {
 
 export default function BranchDetailPage() {
   const { branchId } = useParams()
-  const { cart, totals, addItem } = useCart()
+  const { totals, addItem } = useCart()
   const [branch, setBranch] = useState(null)
   const [error, setError] = useState(null)
   const [justAdded, setJustAdded] = useState(null)
+  const [quoteService, setQuoteService] = useState(null)
 
   useEffect(() => {
     api
@@ -38,19 +40,14 @@ export default function BranchDetailPage() {
   }, [branchId])
 
   const handleAdd = (service) => {
-    let result = addItem(branch, service)
-    if (result === 'different-branch') {
-      const confirmed = window.confirm(
-        `Your cart contains treatments at ${cart.branchName}. ` +
-          `Start a new cart at ${branch.name} instead?`
-      )
-      if (!confirmed) return
-      result = addItem(branch, service, { replaceBranch: true })
+    // Nail art is priced per design: adding it starts a quote request instead.
+    if (service.category === 'addon') {
+      setQuoteService(service)
+      return
     }
-    if (result === 'added') {
-      setJustAdded(service.id)
-      setTimeout(() => setJustAdded(null), 1500)
-    }
+    addItem(branch, service)
+    setJustAdded(service.id)
+    setTimeout(() => setJustAdded(null), 1500)
   }
 
   if (error) return <div className="container error-text">{error}</div>
@@ -67,7 +64,7 @@ export default function BranchDetailPage() {
       {branch.address && <p className="muted">{branch.address}</p>}
       {branch.phone_number && <p className="muted">{branch.phone_number}</p>}
 
-      {cart && cart.branchId === branchId && totals.count > 0 && (
+      {totals.count > 0 && (
         <Link to="/cart" className="cart-bar">
           <span>
             {totals.count} {totals.count === 1 ? 'treatment' : 'treatments'} · £
@@ -80,6 +77,12 @@ export default function BranchDetailPage() {
       {[...groups.entries()].map(([category, services]) => (
         <section key={category} className="service-section">
           <h2>{CATEGORY_LABELS[category] || category}</h2>
+          {category === 'addon' && (
+            <div className="gift-banner design-invite">
+              Have your own design in mind? <Link to="/designs">Send us a photo</Link> and
+              we&apos;ll quote a price before you book.
+            </div>
+          )}
           <div className="service-list">
             {services.map((service) => (
               <div key={service.id} className="card service-row">
@@ -89,7 +92,9 @@ export default function BranchDetailPage() {
                   <span className="muted">{service.duration_min} min</span>
                 </div>
                 <div className="service-row-action">
-                  <span className="service-price">£{service.base_price}</span>
+                  <span className="service-price">
+                    {service.category === 'addon' ? `from £${service.base_price}` : `£${service.base_price}`}
+                  </span>
                   <button
                     type="button"
                     className={'btn btn-gold' + (justAdded === service.id ? ' btn-added' : '')}
@@ -103,6 +108,14 @@ export default function BranchDetailPage() {
           </div>
         </section>
       ))}
+
+      {quoteService && (
+        <DesignRequestModal
+          service={quoteService}
+          branch={branch}
+          onClose={() => setQuoteService(null)}
+        />
+      )}
     </div>
   )
 }

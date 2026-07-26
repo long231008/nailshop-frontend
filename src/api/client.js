@@ -75,6 +75,41 @@ export const api = {
     request(`/app/bookings/${bookingId}/approve`, { method: 'POST', token }),
   pendingBookings: (branchId, token) =>
     request(`/app/schedule/pending${branchId ? `?branch_id=${branchId}` : ''}`, { token }),
+  publicLockedRanges: (branchId, date) =>
+    request(`/app/slot-locks/public?branch_id=${branchId}&date=${date}`),
+  myCustomDesigns: (token) => request('/app/me/custom-designs', { token }),
+  uploadCustomDesign: async (file, description, token) => {
+    // Multipart upload - the JSON helper above doesn't fit here.
+    const form = new FormData()
+    if (file) form.append('file', file)
+    if (description) form.append('description', description)
+    const res = await fetch(`${API_BASE_URL}/app/custom-designs`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
+    if (!res.ok) {
+      let detail = null
+      try {
+        detail = (await res.json()).detail
+      } catch {
+        // no JSON body
+      }
+      throw new ApiError(res.status, detail)
+    }
+    return res.json()
+  },
+  listUnpricedDesigns: (token) => request('/app/custom-designs?priced=false', { token }),
+  priceCustomDesign: (designId, price, token) =>
+    request(`/app/custom-designs/${designId}/price`, {
+      method: 'POST',
+      body: { estimated_price: price },
+      token,
+    }),
+  acceptCustomDesign: (designId, payload, token) =>
+    request(`/app/custom-designs/${designId}/accept`, { method: 'POST', body: payload, token }),
+  rejectCustomDesign: (designId, token) =>
+    request(`/app/custom-designs/${designId}/reject`, { method: 'POST', token }),
   setSlotLockPermission: (staffId, enabled, token) =>
     request(`/app/admin/staff/${staffId}/slot-lock-permission`, {
       method: 'POST',

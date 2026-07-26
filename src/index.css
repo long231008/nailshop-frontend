@@ -546,6 +546,20 @@ select {
   border-color: var(--green);
 }
 
+.slot-btn-locked {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  text-decoration: line-through;
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.slot-btn-locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 @media (prefers-color-scheme: dark) {
   .slot-btn-active {
     color: var(--green-dark);
@@ -625,6 +639,32 @@ select {
   margin-top: 0.5rem;
   border-top: 2px solid var(--border);
   font-weight: 600;
+}
+
+.branch-cart {
+  margin-top: 1.25rem;
+  text-align: left;
+}
+
+.branch-cart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 2px solid var(--gold);
+}
+
+.branch-cart-head h2 {
+  margin-bottom: 0.1rem;
+}
+
+.booking-confirmation {
+  margin-top: 1rem;
+  text-align: left;
+  border-left: 3px solid var(--success);
 }
 
 .gift-banner {
@@ -797,6 +837,306 @@ select {
   flex: 1;
 }
 
+/* ---------- custom designs ---------- */
+
+.design-card {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.design-card-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.design-thumb {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.design-card-main .service-row-info {
+  flex: 1;
+  min-width: 160px;
+}
+
+.quote-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.quote-form .input {
+  width: 90px;
+}
+
+.badge-priced {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--gold-dark);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+.badge-accepted {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+.badge-rejected {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+.design-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--gold-dark);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+}
+
+.modal-card {
+  max-width: 440px;
+  width: 100%;
+  cursor: default;
+  text-align: left;
+}
+
+textarea.input {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.design-thumb-clickable {
+  cursor: zoom-in;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.design-thumb-clickable:hover {
+  transform: scale(1.04);
+  box-shadow: var(--shadow-lift);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(10, 12, 10, 0.82);
+  cursor: zoom-out;
+}
+
+.lightbox-image {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.design-invite {
+  margin: 0 0 0.9rem;
+}
+
+.design-invite a {
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+
+/* ---------- occupancy view ---------- */
+
+.occupancy {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.occupancy-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.45rem 1rem;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.92rem;
+  cursor: default;
+  text-align: left;
+}
+
+.occupancy-row-busy {
+  cursor: pointer;
+  background: color-mix(in srgb, var(--green) 6%, transparent);
+}
+
+.occupancy-row-busy:hover {
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+}
+
+.occupancy-row-hour {
+  border-top: 2px solid var(--border);
+}
+
+.occupancy-row-now {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.occupancy-time {
+  width: 52px;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.occupancy-row-hour .occupancy-time {
+  color: var(--green);
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.occupancy-bar {
+  flex: 1;
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.occupancy-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--gold-dark) 60%, transparent);
+}
+
+.occupancy-count {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+}
+
+.occupancy-detail {
+  padding: 0.4rem 1rem 0.8rem 4.2rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+}
+
+.occupancy-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0;
+}
+
+/* ---------- slot lock picker ---------- */
+
+.lock-section {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.lock-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.lock-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 500;
+  font-size: 0.88rem;
+}
+
+.lock-controls .lock-reason {
+  flex: 1;
+  min-width: 220px;
+}
+
+.lockgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.45rem;
+}
+
+.lockgrid-slot {
+  padding: 0.5rem 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  border-radius: 8px;
+  border: 1.5px solid color-mix(in srgb, var(--green) 35%, transparent);
+  background: var(--card-bg);
+  color: var(--green);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.lockgrid-slot:hover {
+  transform: translateY(-1px);
+}
+
+.lockgrid-slot-selected {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--cream);
+}
+
+@media (prefers-color-scheme: dark) {
+  .lockgrid-slot-selected {
+    color: var(--green-dark);
+  }
+}
+
+.lockgrid-slot-locked {
+  background: color-mix(in srgb, var(--danger) 14%, var(--card-bg));
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+.lock-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
 .method-toggle {
   display: flex;
   gap: 0.6rem;
@@ -896,14 +1236,21 @@ select {
   height: 34px;
 }
 
-.daygrid-hour-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.daygrid-quarter-label {
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text-muted) 70%, transparent);
   font-variant-numeric: tabular-nums;
-  transform: translateY(-0.5em);
+  transform: translateY(-0.55em);
   text-align: right;
   padding-right: 0.4rem;
+  line-height: 1;
+}
+
+.daygrid-quarter-label-hour {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--green);
 }
 
 .daygrid-col {
@@ -930,13 +1277,21 @@ select {
   position: relative;
   border-radius: 12px;
   border: 1px solid var(--border);
+  /* A faint line every 15 minutes, a stronger one on the hour (24px per quarter). */
   background:
     repeating-linear-gradient(
       to bottom,
       transparent 0,
-      transparent 71px,
-      var(--border) 71px,
-      var(--border) 72px
+      transparent 95px,
+      var(--border) 95px,
+      var(--border) 96px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 23px,
+      color-mix(in srgb, var(--border) 45%, transparent) 23px,
+      color-mix(in srgb, var(--border) 45%, transparent) 24px
     ),
     var(--card-bg);
 }

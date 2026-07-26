@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { api } from '../api/client'
+import SlotLockManager from '../components/SlotLockManager'
 import { useAuth } from '../context/AuthContext'
 
 const OPEN_HOUR = 9
 const CLOSE_HOUR = 18
-const HOUR_PX = 72
-const GRID_HEIGHT = (CLOSE_HOUR - OPEN_HOUR) * HOUR_PX
+const STEP_MIN = 15
 
 function toIso(date) {
   return date.toISOString().slice(0, 10)
@@ -27,11 +27,6 @@ function shiftDate(dateStr, days) {
   return toIso(date)
 }
 
-function minutesFromOpen(isoTime) {
-  const date = new Date(isoTime)
-  return date.getHours() * 60 + date.getMinutes() - OPEN_HOUR * 60
-}
-
 function fmtTime(isoTime) {
   return new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
@@ -46,6 +41,7 @@ export default function SchedulePage() {
   const [schedule, setSchedule] = useState(null)
   const [requests, setRequests] = useState([])
   const [error, setError] = useState(null)
+  const [expanded, setExpanded] = useState(null)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -70,6 +66,7 @@ export default function SchedulePage() {
 
   useEffect(() => {
     setSchedule(null)
+    setExpanded(null)
     reload()
   }, [reload])
 
@@ -83,37 +80,37 @@ export default function SchedulePage() {
 
   const branchName = (id) => branches.find((b) => b.id === id)?.name || ''
   const isToday = date === toIso(new Date())
-  const nowMinutes = now.getHours() * 60 + now.getMinutes() - OPEN_HOUR * 60
-  const showNowLine = isToday && nowMinutes >= 0 && nowMinutes <= (CLOSE_HOUR - OPEN_HOUR) * 60
 
-  // One column per staff member appearing that day (unassigned work gets its own).
-  const columns = []
+  // One row per 15-minute frame. A guest appears only in the frame they booked
+  // (their start time), never spread across the following ones.
+  let quarterRows = []
   if (schedule) {
-    const seen = new Map()
-    for (const a of schedule.appointments) {
-      const key = `${a.staff_name || 'Unassigned'}|${a.branch_id}`
-      if (!seen.has(key)) {
-        seen.set(key, {
-          key,
-          staffName: a.staff_name || 'Unassigned',
-          branchId: a.branch_id,
-          appointments: [],
+    for (let h = OPEN_HOUR; h < CLOSE_HOUR; h += 1) {
+      for (let m = 0; m < 60; m += STEP_MIN) {
+        const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+        const start = new Date(`${date}T${label}:00`)
+        const end = new Date(start.getTime() + STEP_MIN * 60000)
+        const items = schedule.appointments.filter((a) => {
+          const startsAt = new Date(a.start_time)
+          return startsAt >= start && startsAt < end
         })
-        columns.push(seen.get(key))
+        quarterRows.push({ label, start, end, items })
       }
-      seen.get(key).appointments.push(a)
     }
   }
 
-  const hours = []
-  for (let h = OPEN_HOUR; h <= CLOSE_HOUR; h += 1) hours.push(h)
+  const currentLabel =
+    isToday &&
+    `${String(now.getHours()).padStart(2, '0')}:${String(
+      Math.floor(now.getMinutes() / STEP_MIN) * STEP_MIN
+    ).padStart(2, '0')}`
 
   return (
-    <div className="container container-wide">
+    <div className="container">
       <h1>Daily schedule</h1>
       <p className="muted">
-        The day book, {OPEN_HOUR}:00 – {CLOSE_HOUR}:00. Deposit-secured appointments sit on the
-        grid; everything else waits below for a grant or its deposit.
+        Each 15-minute frame shows the guests who booked that exact time. Tap a frame to see
+        who.
       </p>
 
       <div className="schedule-toolbar">
@@ -187,67 +184,70 @@ export default function SchedulePage() {
             </p>
           )}
 
-          {columns.length === 0 && (
-            <div className="card schedule-empty">
-              <p className="muted">Nothing on the book for this day yet.</p>
-            </div>
-          )}
+          <div className="occupancy">
+            {quarterRows.map((q) => {
+              const busy = q.items.length > 0
+              const isCurrent = currentLabel === q.label
+              return (
+                <div key={q.label}>
+                  <button
+                    type="button"
+                    className={
+                      'occupancy-row' +
+                      (q.label.endsWith(':00') ? ' occupancy-row-hour' : '') +
+                      (busy ? ' occupancy-row-busy' : '') +
+                      (isCurrent ? ' occupancy-row-now' : '')
+                    }
+                    onClick={() => busy && setExpanded(expanded === q.label ? null : q.label)}
+                  >
+                    <span className="occupancy-time">{q.label}</span>
+                    <span className="occupancy-bar">
+                      {q.items.map((_, i) => (
+                        <span key={i} className="occupancy-dot" />
+                      ))}
+                    </span>
+                    <span className={'occupancy-count' + (busy ? '' : ' muted')}>
+                      {busy
+                        ? `${q.items.length} ${q.items.length === 1 ? 'guest' : 'guests'}`
+                        : '—'}
+                    </span>
+                  </button>
 
-          {columns.length > 0 && (
-            <div className="daygrid-scroll">
-              <div className="daygrid" style={{ height: GRID_HEIGHT + 34 }}>
-                <div className="daygrid-gutter">
-                  <div className="daygrid-corner" />
-                  {hours.map((h) => (
-                    <div key={h} className="daygrid-hour-label" style={{ height: HOUR_PX }}>
-                      {String(h).padStart(2, '0')}:00
-                    </div>
-                  ))}
-                </div>
-
-                {columns.map((col) => (
-                  <div key={col.key} className="daygrid-col">
-                    <div className="daygrid-col-head">
-                      <span className="daygrid-staff">{col.staffName}</span>
-                      {!branchId && branchName(col.branchId) && (
-                        <span className="chip chip-branch">{branchName(col.branchId)}</span>
-                      )}
-                    </div>
-                    <div className="daygrid-col-body" style={{ height: GRID_HEIGHT }}>
-                      {showNowLine && (
-                        <div
-                          className="daygrid-now"
-                          style={{ top: (nowMinutes / 60) * HOUR_PX }}
-                        />
-                      )}
-                      {col.appointments.map((a, i) => {
-                        const top = Math.max(0, (minutesFromOpen(a.start_time) / 60) * HOUR_PX)
-                        const rawHeight =
-                          ((minutesFromOpen(a.end_time) - minutesFromOpen(a.start_time)) / 60) *
-                          HOUR_PX
-                        const height = Math.max(30, rawHeight)
-                        return (
-                          <div
-                            key={`${a.booking_id}-${i}`}
-                            className={`daygrid-event daygrid-event-${a.status}`}
-                            style={{ top, height }}
-                            title={`${fmtTime(a.start_time)}–${fmtTime(a.end_time)} ${a.service_name}`}
-                          >
-                            <span className="daygrid-event-time">
-                              {fmtTime(a.start_time)}–{fmtTime(a.end_time)}
-                            </span>
-                            <span className="daygrid-event-service">{a.service_name}</span>
-                            <span className="daygrid-event-customer">
-                              {a.customer_name || 'Customer'} · £{a.price}
-                            </span>
+                  {expanded === q.label && (
+                    <div className="occupancy-detail">
+                      {q.items.map((a, i) => (
+                        <div key={`${a.booking_id}-${i}`} className="occupancy-detail-row">
+                          <div className="service-row-info">
+                            <strong>
+                              {fmtTime(a.start_time)}–{fmtTime(a.end_time)} · {a.service_name}
+                            </strong>
+                            <p className="muted">
+                              {a.customer_name || 'Customer'}
+                              {a.customer_phone ? ` · ${a.customer_phone}` : ''}
+                              {a.staff_name ? ` · with ${a.staff_name}` : ''}
+                              {!branchId && branchName(a.branch_id)
+                                ? ` · ${branchName(a.branch_id)}`
+                                : ''}
+                            </p>
                           </div>
-                        )
-                      })}
+                          <span className={`badge badge-${a.status}`}>
+                            {a.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {branchId ? (
+            <SlotLockManager branchId={branchId} token={auth.token} initialDate={date} />
+          ) : (
+            <p className="muted" style={{ textAlign: 'left', marginTop: '1.5rem' }}>
+              Pick a specific branch above to lock time slots.
+            </p>
           )}
         </>
       )}

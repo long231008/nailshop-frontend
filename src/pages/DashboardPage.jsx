@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import DesignQuotes from '../components/DesignQuotes'
 import SlotLockManager from '../components/SlotLockManager'
 import UserManager from '../components/UserManager'
 
@@ -101,7 +102,9 @@ export default function DashboardPage() {
         </>
       )}
 
-      {branchId && <SlotLockManager branchId={branchId} token={auth.token} />}
+      {branchId && <SlotLockManager branchId={branchId} token={auth.token} showPermissions />}
+
+      <DesignQuotes token={auth.token} />
 
       <UserManager branches={branches} token={auth.token} />
 

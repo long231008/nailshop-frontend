@@ -1,72 +1,117 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useAuth } from './AuthContext'
 
 const CartContext = createContext(null)
-const STORAGE_KEY = 'nailshop_cart'
+const LEGACY_KEY = 'nailshop_cart'
 
-function loadStoredCart() {
+function storageKey(userId) {
+  return `nailshop_cart_${userId || 'guest'}`
+}
+
+function parseCart(raw) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
     const parsed = raw ? JSON.parse(raw) : null
-    if (parsed && parsed.branchId && Array.isArray(parsed.items)) return parsed
-    return null
+    if (!parsed) return []
+    if (Array.isArray(parsed)) return parsed
+    // Very old shape ({branchId, branchName, items}): lift the branch onto items.
+    if (parsed.branchId && Array.isArray(parsed.items)) {
+      return parsed.items.map((item) => ({
+        ...item,
+        branchId: parsed.branchId,
+        branchName: parsed.branchName,
+      }))
+    }
+    return []
   } catch {
-    return null
+    return []
   }
 }
 
+function loadCart(key) {
+  const own = parseCart(localStorage.getItem(key))
+  // One-time migration of the pre-per-account cart.
+  const legacy = parseCart(localStorage.getItem(LEGACY_KEY))
+  if (legacy.length > 0) {
+    localStorage.removeItem(LEGACY_KEY)
+    return [...own, ...legacy]
+  }
+  return own
+}
+
+// One cart per account: each signed-in user keeps their own cart, guests get a
+// temporary one that merges into their account cart when they log in.
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState(loadStoredCart)
+  const { auth } = useAuth()
+  const userId = auth?.userId || null
+
+  const keyRef = useRef(storageKey(userId))
+  const [items, setItems] = useState(() => loadCart(keyRef.current))
 
   useEffect(() => {
-    if (cart && cart.items.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
-    } else {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-  }, [cart])
+    const newKey = storageKey(userId)
+    if (newKey === keyRef.current) return
 
-  // All items in one booking must belong to a single branch (the backend
-  // enforces it), so adding from a different branch needs an explicit reset.
-  const addItem = (branch, service, { replaceBranch = false } = {}) => {
-    if (cart && cart.branchId !== branch.id && !replaceBranch) {
-      return 'different-branch'
-    }
-    const item = {
-      serviceId: service.id,
-      name: service.name,
-      price: service.base_price,
-      durationMin: service.duration_min,
-    }
-    setCart((prev) => {
-      if (!prev || prev.branchId !== branch.id) {
-        return { branchId: branch.id, branchName: branch.name, items: [item] }
+    let next = loadCart(newKey)
+    if (userId) {
+      // Whatever was picked before logging in comes along into the account cart.
+      const guest = parseCart(localStorage.getItem(storageKey(null)))
+      if (guest.length > 0) {
+        next = [...next, ...guest]
+        localStorage.removeItem(storageKey(null))
       }
-      return { ...prev, items: [...prev.items, item] }
-    })
+    }
+    keyRef.current = newKey
+    setItems(next)
+  }, [userId])
+
+  useEffect(() => {
+    if (items.length > 0) {
+      localStorage.setItem(keyRef.current, JSON.stringify(items))
+    } else {
+      localStorage.removeItem(keyRef.current)
+    }
+  }, [items])
+
+  const addItem = (branch, service, extra = {}) => {
+    setItems((prev) => [
+      ...prev,
+      {
+        branchId: branch.id,
+        branchName: branch.name,
+        serviceId: service.id,
+        name: service.name,
+        price: service.base_price,
+        durationMin: service.duration_min,
+        // extra may carry designId (an accepted custom design and its quote).
+        ...extra,
+      },
+    ])
     return 'added'
   }
 
   const removeItem = (index) => {
-    setCart((prev) => {
-      if (!prev) return prev
-      const items = prev.items.filter((_, i) => i !== index)
-      return items.length > 0 ? { ...prev, items } : null
-    })
+    setItems((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const clear = () => setCart(null)
+  const removeBranchItems = (branchId) => {
+    setItems((prev) => prev.filter((item) => item.branchId !== branchId))
+  }
 
-  const totals = useMemo(() => {
-    const items = cart?.items ?? []
-    return {
+  const clear = () => setItems([])
+
+  const totals = useMemo(
+    () => ({
       count: items.length,
       price: items.reduce((sum, item) => sum + item.price, 0),
       durationMin: items.reduce((sum, item) => sum + item.durationMin, 0),
-    }
-  }, [cart])
+    }),
+    [items]
+  )
 
   return (
-    <CartContext.Provider value={{ cart, totals, addItem, removeItem, clear }}>
+    <CartContext.Provider
+      value={{ items, totals, addItem, removeItem, removeBranchItems, clear }}
+    >
       {children}
     </CartContext.Provider>
   )

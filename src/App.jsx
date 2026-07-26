@@ -5,6 +5,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage'
 import BranchDetailPage from './pages/BranchDetailPage'
 import BranchesPage from './pages/BranchesPage'
 import CartPage from './pages/CartPage'
+import CustomDesignsPage from './pages/CustomDesignsPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MyAccountPage from './pages/MyAccountPage'
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<BranchesPage />} />
         <Route path="/branches/:branchId" element={<BranchDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/designs" element={<CustomDesignsPage />} />
         <Route path="/book" element={<Navigate to="/cart" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />

@@ -11,63 +11,89 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function isSunday(dateStr) {
-  return new Date(`${dateStr}T00:00`).getDay() === 0
-}
-
 function horizonIso() {
   const limit = new Date()
   limit.setDate(limit.getDate() + 365)
   return limit.toISOString().slice(0, 10)
 }
 
-export default function CartPage() {
-  const { cart, totals, removeItem, clear } = useCart()
+function isSunday(dateStr) {
+  return new Date(`${dateStr}T00:00`).getDay() === 0
+}
+
+function fmtTime(isoTime) {
+  return new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+// One branch's slice of the cart: its own date, slot pick and booking, because
+// a booking always belongs to a single salon.
+function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
+  const { removeItem } = useCart()
   const { auth } = useAuth()
   const navigate = useNavigate()
 
   const [date, setDate] = useState(todayIso())
   const [slots, setSlots] = useState(null)
+  const [lockedRanges, setLockedRanges] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [giftMessage, setGiftMessage] = useState(null)
   const [bookError, setBookError] = useState(null)
-  const [booking, setBooking] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  const overDailyLimit = totals.durationMin > DAILY_LIMIT_MINUTES
+  const branchName = branchItems[0].branchName
+  const totalPrice = branchItems.reduce((sum, item) => sum + item.price, 0)
+  const totalDuration = branchItems.reduce((sum, item) => sum + item.durationMin, 0)
+  const overDailyLimit = totalDuration > DAILY_LIMIT_MINUTES
 
   useEffect(() => {
-    if (!cart) return
     api
-      .giftPreview(cart.branchId, totals.price)
+      .giftPreview(branchId, totalPrice)
       .then((data) => setGiftMessage(data.gift_message))
       .catch(() => setGiftMessage(null))
-  }, [cart, totals.price])
+  }, [branchId, totalPrice])
 
   useEffect(() => {
-    if (!cart || !date || overDailyLimit) return
+    if (!date || overDailyLimit) return
     setSlots(null)
     setSelectedSlot(null)
+    setLockedRanges([])
     if (isSunday(date)) return
     api
       .getAvailability({
-        branch_id: cart.branchId,
-        service_id: cart.items[0].serviceId,
+        branch_id: branchId,
+        service_id: branchItems[0].serviceId,
         date,
-        duration_min: totals.durationMin,
+        duration_min: totalDuration,
       })
       .then(setSlots)
       .catch(() => setSlots([]))
-  }, [cart, date, totals.durationMin, overDailyLimit])
+    api
+      .publicLockedRanges(branchId, date)
+      .then(setLockedRanges)
+      .catch(() => setLockedRanges([]))
+    // branchItems identity changes on every cart edit; serviceId/duration cover it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId, date, totalDuration, overDailyLimit])
 
-  const slotsByTime = useMemo(() => {
+  // Free slots plus locked quarter-hours, merged into one chronological strip so
+  // locked times show crossed out instead of silently vanishing.
+  const slotEntries = useMemo(() => {
     if (!slots) return null
-    const map = new Map()
+    const seen = new Map()
     for (const slot of slots) {
-      if (!map.has(slot.start_time)) map.set(slot.start_time, slot)
+      const key = new Date(slot.start_time).getTime()
+      if (!seen.has(key)) seen.set(key, { time: key, iso: slot.start_time, slot, locked: false })
     }
-    return [...map.values()].sort((a, b) => a.start_time.localeCompare(b.start_time))
-  }, [slots])
+    for (const range of lockedRanges) {
+      const start = new Date(range.start_time)
+      const end = new Date(range.end_time)
+      for (let t = new Date(start); t < end; t = new Date(t.getTime() + 15 * 60000)) {
+        const key = t.getTime()
+        seen.set(key, { time: key, iso: t.toISOString(), slot: null, locked: true })
+      }
+    }
+    return [...seen.values()].sort((a, b) => a.time - b.time)
+  }, [slots, lockedRanges])
 
   const handleConfirm = async () => {
     if (!auth) {
@@ -77,9 +103,8 @@ export default function CartPage() {
     setBookError(null)
     setBusy(true)
     try {
-      // Services run back-to-back with the staff member from the chosen slot.
       let offsetMin = 0
-      const items = cart.items.map((item) => {
+      const items = branchItems.map((item) => {
         const start = new Date(
           new Date(selectedSlot.start_time).getTime() + offsetMin * 60000
         ).toISOString()
@@ -88,11 +113,11 @@ export default function CartPage() {
           service_id: item.serviceId,
           staff_id: selectedSlot.staff_id,
           start_time: start,
+          custom_design_id: item.designId || null,
         }
       })
-      const result = await api.createBooking({ branch_id: cart.branchId, items }, auth.token)
-      setBooking(result)
-      clear()
+      const result = await api.createBooking({ branch_id: branchId, items }, auth.token)
+      onBooked(branchId, result)
     } catch (err) {
       setBookError(err.message)
     } finally {
@@ -100,81 +125,48 @@ export default function CartPage() {
     }
   }
 
-  if (booking) {
-    return (
-      <div className="container container-narrow">
-        <h1>Booking requested</h1>
-        <div className="card">
-          <p>
-            Your booking of <strong>{booking.details.length}</strong>{' '}
-            {booking.details.length === 1 ? 'treatment' : 'treatments'} (£
-            {booking.total_price}) has been submitted.
-          </p>
-          {booking.gift_message && <p className="gift-banner">🎁 {booking.gift_message}</p>}
-          <p className="muted">
-            The salon will confirm it and send you a deposit link. You can pay the deposit from
-            your account page.
-          </p>
-          <Link to="/me" className="btn">
-            View my bookings
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  if (!cart) {
-    return (
-      <div className="container container-narrow">
-        <h1>Your cart</h1>
-        <div className="card">
-          <p className="muted">Your cart is empty.</p>
-          <Link to="/" className="btn">
-            Browse our salons
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="container container-narrow">
-      <Link to={`/branches/${cart.branchId}`} className="back-link">
-        ← Add more at {cart.branchName}
-      </Link>
-      <h1>Your cart</h1>
-      <p className="muted">
-        {cart.branchName} · {totals.count} {totals.count === 1 ? 'treatment' : 'treatments'} ·{' '}
-        {totals.durationMin} min
-      </p>
-
-      <div className="card">
-        <div className="service-list">
-          {cart.items.map((item, index) => (
-            <div key={`${item.serviceId}-${index}`} className="cart-row">
-              <div className="service-row-info">
-                <strong>{item.name}</strong>
-                <p className="muted">{item.durationMin} min</p>
-              </div>
-              <div className="service-row-action">
-                <span className="service-price">£{item.price}</span>
-                <button
-                  className="btn btn-danger-outline"
-                  onClick={() => removeItem(index)}
-                  aria-label={`Remove ${item.name}`}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="card branch-cart">
+      <div className="branch-cart-head">
+        <div>
+          <h2>{branchName}</h2>
+          {branchAddress && <p className="muted">{branchAddress}</p>}
         </div>
-        <div className="cart-total">
-          <span>Total</span>
-          <span className="service-price">£{totals.price.toFixed(2)}</span>
-        </div>
-        {giftMessage && <p className="gift-banner">🎁 {giftMessage}</p>}
+        <span className="muted">
+          {branchItems.length} {branchItems.length === 1 ? 'treatment' : 'treatments'} ·{' '}
+          {totalDuration} min
+        </span>
       </div>
+
+      <div className="service-list">
+        {branchItems.map((item) => (
+          <div key={item.cartIndex} className="cart-row">
+            <div className="service-row-info">
+              <strong>{item.name}</strong>
+              <p className="muted">
+                {item.durationMin} min · {branchName}
+                {branchAddress ? ` — ${branchAddress}` : ''}
+              </p>
+            </div>
+            <div className="service-row-action">
+              <span className="service-price">£{item.price}</span>
+              <button
+                className="btn btn-danger-outline"
+                onClick={() => removeItem(item.cartIndex)}
+                aria-label={`Remove ${item.name}`}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="cart-total">
+        <span>Total at {branchName}</span>
+        <span className="service-price">£{totalPrice.toFixed(2)}</span>
+      </div>
+      {giftMessage && <p className="gift-banner">🎁 {giftMessage}</p>}
 
       {overDailyLimit && (
         <p className="error-text" style={{ marginTop: '1rem' }}>
@@ -184,7 +176,7 @@ export default function CartPage() {
       )}
 
       {!overDailyLimit && (
-        <div className="card form-stack">
+        <div className="form-stack">
           <label>
             Date
             <input
@@ -214,33 +206,46 @@ export default function CartPage() {
             </div>
           )}
 
-          {!isSunday(date) && slots === null && (
+          {!isSunday(date) && slotEntries === null && (
             <p className="muted">Loading available times...</p>
           )}
-          {!isSunday(date) && slots !== null && slotsByTime.length === 0 && (
+          {!isSunday(date) && slotEntries !== null && slotEntries.length === 0 && (
             <p className="muted">
-              No time can fit all {totals.count} treatments on this date. Try another day.
+              No time can fit all {branchItems.length}{' '}
+              {branchItems.length === 1 ? 'treatment' : 'treatments'} on this date. Try another
+              day.
             </p>
           )}
 
-          {slotsByTime && slotsByTime.length > 0 && (
+          {slotEntries && slotEntries.length > 0 && !isSunday(date) && (
             <div className="slot-grid">
-              {slotsByTime.map((slot) => (
-                <button
-                  key={slot.start_time}
-                  type="button"
-                  className={
-                    'btn btn-outline slot-btn' +
-                    (selectedSlot?.start_time === slot.start_time ? ' slot-btn-active' : '')
-                  }
-                  onClick={() => setSelectedSlot(slot)}
-                >
-                  {new Date(slot.start_time).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </button>
-              ))}
+              {slotEntries.map((entry) =>
+                entry.locked ? (
+                  <button
+                    key={entry.time}
+                    type="button"
+                    className="btn btn-outline slot-btn slot-btn-locked"
+                    disabled
+                    title="This time has been locked by the salon"
+                  >
+                    {fmtTime(entry.iso)}
+                  </button>
+                ) : (
+                  <button
+                    key={entry.time}
+                    type="button"
+                    className={
+                      'btn btn-outline slot-btn' +
+                      (selectedSlot?.start_time === entry.slot.start_time
+                        ? ' slot-btn-active'
+                        : '')
+                    }
+                    onClick={() => setSelectedSlot(entry.slot)}
+                  >
+                    {fmtTime(entry.iso)}
+                  </button>
+                )
+              )}
             </div>
           )}
 
@@ -254,11 +259,95 @@ export default function CartPage() {
             {busy
               ? 'Booking...'
               : auth
-                ? `Book ${totals.count} ${totals.count === 1 ? 'treatment' : 'treatments'}`
+                ? `Book at ${branchName}`
                 : 'Log in to book'}
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+export default function CartPage() {
+  const { items, totals, removeBranchItems } = useCart()
+  const [branches, setBranches] = useState([])
+  const [confirmations, setConfirmations] = useState([])
+
+  useEffect(() => {
+    api.listBranches().then(setBranches).catch(() => {})
+  }, [])
+
+  const groups = useMemo(() => {
+    const map = new Map()
+    items.forEach((item, index) => {
+      if (!map.has(item.branchId)) map.set(item.branchId, [])
+      map.get(item.branchId).push({ ...item, cartIndex: index })
+    })
+    return [...map.entries()]
+  }, [items])
+
+  const branchAddress = (id) => branches.find((b) => b.id === id)?.address || null
+
+  const handleBooked = (branchId, booking) => {
+    const group = groups.find(([id]) => id === branchId)
+    setConfirmations((prev) => [
+      ...prev,
+      {
+        branchName: group ? group[1][0].branchName : 'the salon',
+        count: booking.details.length,
+        total: booking.total_price,
+        giftMessage: booking.gift_message,
+      },
+    ])
+    removeBranchItems(branchId)
+  }
+
+  return (
+    <div className="container container-narrow">
+      <h1>Your cart</h1>
+      {totals.count > 0 && (
+        <p className="muted">
+          {totals.count} {totals.count === 1 ? 'treatment' : 'treatments'} across{' '}
+          {groups.length} {groups.length === 1 ? 'salon' : 'salons'} · £
+          {totals.price.toFixed(2)}
+        </p>
+      )}
+
+      {confirmations.map((c, i) => (
+        <div key={i} className="card booking-confirmation">
+          <p>
+            ✅ Booking of <strong>{c.count}</strong> {c.count === 1 ? 'treatment' : 'treatments'}{' '}
+            (£{c.total}) at <strong>{c.branchName}</strong> submitted. The salon will confirm it
+            and send you a deposit link.
+          </p>
+          {c.giftMessage && <p className="gift-banner">🎁 {c.giftMessage}</p>}
+        </div>
+      ))}
+
+      {items.length === 0 && confirmations.length === 0 && (
+        <div className="card">
+          <p className="muted">Your cart is empty.</p>
+          <Link to="/" className="btn">
+            Browse our salons
+          </Link>
+        </div>
+      )}
+
+      {items.length === 0 && confirmations.length > 0 && (
+        <Link to="/me" className="btn" style={{ marginTop: '0.5rem' }}>
+          View my bookings
+        </Link>
+      )}
+
+      {groups.map(([branchId, branchItems]) => (
+        <BranchCartSection
+          key={branchId}
+          branchId={branchId}
+          branchItems={branchItems}
+          branchAddress={branchAddress(branchId)}
+          onBooked={handleBooked}
+        />
+      ))}
     </div>
   )
 }
