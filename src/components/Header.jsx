@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 
 export default function Header() {
   const { auth, logout } = useAuth()
+  const { totals } = useCart()
 
   return (
     <header className="header">
@@ -10,6 +12,10 @@ export default function Header() {
         Nailzinc <em>Limited</em>
       </Link>
       <nav className="header-nav">
+        <Link to="/cart" className="cart-link">
+          Cart
+          {totals.count > 0 && <span className="cart-count">{totals.count}</span>}
+        </Link>
         {auth ? (
           <>
             {auth.role === 'admin' && <Link to="/dashboard">Dashboard</Link>}

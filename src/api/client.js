@@ -52,6 +52,8 @@ export const api = {
   myProfile: (token) => request('/app/me', { token }),
   updateMyProfile: (payload, token) =>
     request('/app/me', { method: 'PATCH', body: payload, token }),
+  giftPreview: (branchId, total) =>
+    request(`/app/discounts/gift-preview?branch_id=${branchId}&total=${total}`),
   dashboardSummary: (branchId, token) =>
     request(`/app/dashboard/summary${branchId ? `?branch_id=${branchId}` : ''}`, { token }),
   dashboardRevenue: (branchId, token) =>

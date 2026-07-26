@@ -1,10 +1,10 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Footer from './components/Footer'
 import Header from './components/Header'
 import AuthCallbackPage from './pages/AuthCallbackPage'
-import BookPage from './pages/BookPage'
 import BranchDetailPage from './pages/BranchDetailPage'
 import BranchesPage from './pages/BranchesPage'
+import CartPage from './pages/CartPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MyAccountPage from './pages/MyAccountPage'
@@ -16,7 +16,8 @@ function App() {
       <Routes>
         <Route path="/" element={<BranchesPage />} />
         <Route path="/branches/:branchId" element={<BranchDetailPage />} />
-        <Route path="/book" element={<BookPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/book" element={<Navigate to="/cart" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/me" element={<MyAccountPage />} />
