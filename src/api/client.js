@@ -67,6 +67,8 @@ export const api = {
     request(`/app/admin/users/${userId}/bookings`, { token }),
   dailySchedule: (params, token) =>
     request(`/app/schedule?${new URLSearchParams(params).toString()}`, { token }),
+  approveBooking: (bookingId, token) =>
+    request(`/app/bookings/${bookingId}/approve`, { method: 'POST', token }),
   setSlotLockPermission: (staffId, enabled, token) =>
     request(`/app/admin/staff/${staffId}/slot-lock-permission`, {
       method: 'POST',

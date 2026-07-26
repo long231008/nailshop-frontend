@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+
+const OPEN_HOUR = 9
+const CLOSE_HOUR = 18
+const HOUR_PX = 72
+const GRID_HEIGHT = (CLOSE_HOUR - OPEN_HOUR) * HOUR_PX
 
 function toIso(date) {
   return date.toISOString().slice(0, 10)
 }
 
 function labelFor(dateStr) {
-  const date = new Date(`${dateStr}T00:00`)
-  return date.toLocaleDateString([], {
+  return new Date(`${dateStr}T00:00`).toLocaleDateString([], {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -23,6 +27,15 @@ function shiftDate(dateStr, days) {
   return toIso(date)
 }
 
+function minutesFromOpen(isoTime) {
+  const date = new Date(isoTime)
+  return date.getHours() * 60 + date.getMinutes() - OPEN_HOUR * 60
+}
+
+function fmtTime(isoTime) {
+  return new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 const STAFF_ROLES = new Set(['admin', 'staff'])
 
 export default function SchedulePage() {
@@ -32,15 +45,16 @@ export default function SchedulePage() {
   const [branchId, setBranchId] = useState('')
   const [schedule, setSchedule] = useState(null)
   const [error, setError] = useState(null)
+  const [approvingId, setApprovingId] = useState(null)
+  const [now, setNow] = useState(new Date())
 
   useEffect(() => {
     if (!auth || !STAFF_ROLES.has(auth.role)) return
     api.listBranches().then(setBranches).catch(() => {})
   }, [auth])
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!auth || !STAFF_ROLES.has(auth.role)) return
-    setSchedule(null)
     setError(null)
     const params = { date }
     if (branchId) params.branch_id = branchId
@@ -50,20 +64,73 @@ export default function SchedulePage() {
       .catch((err) => setError(err.message))
   }, [auth, date, branchId])
 
+  useEffect(() => {
+    setSchedule(null)
+    reload()
+  }, [reload])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   if (!auth) return <Navigate to="/login" replace />
   if (!STAFF_ROLES.has(auth.role)) return <Navigate to="/" replace />
 
   const branchName = (id) => branches.find((b) => b.id === id)?.name || ''
   const isToday = date === toIso(new Date())
+  const nowMinutes = now.getHours() * 60 + now.getMinutes() - OPEN_HOUR * 60
+  const showNowLine = isToday && nowMinutes >= 0 && nowMinutes <= (CLOSE_HOUR - OPEN_HOUR) * 60
+
+  const handleApprove = async (bookingId) => {
+    setApprovingId(bookingId)
+    setError(null)
+    try {
+      await api.approveBooking(bookingId, auth.token)
+      reload()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setApprovingId(null)
+    }
+  }
+
+  // One column per staff member appearing that day (unassigned work gets its own).
+  const columns = []
+  if (schedule) {
+    const seen = new Map()
+    for (const a of schedule.appointments) {
+      const key = `${a.staff_name || 'Unassigned'}|${a.branch_id}`
+      if (!seen.has(key)) {
+        seen.set(key, {
+          key,
+          staffName: a.staff_name || 'Unassigned',
+          branchId: a.branch_id,
+          appointments: [],
+        })
+        columns.push(seen.get(key))
+      }
+      seen.get(key).appointments.push(a)
+    }
+  }
+
+  const hours = []
+  for (let h = OPEN_HOUR; h <= CLOSE_HOUR; h += 1) hours.push(h)
 
   return (
-    <div className="container">
+    <div className="container container-wide">
       <h1>Daily schedule</h1>
-      <p className="muted">Every confirmed appointment, at a glance.</p>
+      <p className="muted">
+        The day book, {OPEN_HOUR}:00 – {CLOSE_HOUR}:00. Deposit-secured appointments sit on the
+        grid; everything else waits below for a grant or its deposit.
+      </p>
 
       <div className="schedule-toolbar">
         <div className="schedule-nav">
-          <button className="btn btn-outline schedule-nav-btn" onClick={() => setDate(shiftDate(date, -1))}>
+          <button
+            className="btn btn-outline schedule-nav-btn"
+            onClick={() => setDate(shiftDate(date, -1))}
+          >
             ←
           </button>
           <input
@@ -72,7 +139,10 @@ export default function SchedulePage() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-          <button className="btn btn-outline schedule-nav-btn" onClick={() => setDate(shiftDate(date, 1))}>
+          <button
+            className="btn btn-outline schedule-nav-btn"
+            onClick={() => setDate(shiftDate(date, 1))}
+          >
             →
           </button>
           {!isToday && (
@@ -97,7 +167,6 @@ export default function SchedulePage() {
       </div>
 
       <h2 className="schedule-day">{labelFor(date)}</h2>
-
       {error && <p className="error-text">{error}</p>}
       {!schedule && !error && <p className="muted">Loading schedule...</p>}
 
@@ -105,63 +174,118 @@ export default function SchedulePage() {
         <>
           <div className="stat-row schedule-stats">
             <div className="stat-tile">
-              <span className="muted">Appointments</span>
+              <span className="muted">On the book</span>
               <strong>{schedule.appointment_count}</strong>
             </div>
             <div className="stat-tile">
               <span className="muted">Expected value</span>
               <strong>£{schedule.expected_value.toFixed(2)}</strong>
             </div>
+            <div className="stat-tile">
+              <span className="muted">Needs attention</span>
+              <strong>{schedule.pending.length}</strong>
+            </div>
           </div>
 
-          {schedule.appointments.length === 0 && (
+          {schedule.pending.length > 0 && (
+            <section className="pending-section">
+              <h2 className="dash-heading">Needs attention</h2>
+              <div className="service-list">
+                {schedule.pending.map((p, i) => (
+                  <div key={`${p.booking_id}-${i}`} className="card service-row">
+                    <div className="service-row-info">
+                      <strong>
+                        {fmtTime(p.start_time)} · {p.service_name}
+                      </strong>
+                      <p className="muted">
+                        {p.customer_name || 'Customer'}
+                        {p.customer_phone ? ` · ${p.customer_phone}` : ''}
+                        {p.staff_name ? ` · with ${p.staff_name}` : ''}
+                        {!branchId && branchName(p.branch_id)
+                          ? ` · ${branchName(p.branch_id)}`
+                          : ''}
+                      </p>
+                    </div>
+                    <div className="service-row-action">
+                      <span className="service-price">£{p.price}</span>
+                      {p.stage === 'awaiting_approval' ? (
+                        <button
+                          className="btn btn-gold"
+                          disabled={approvingId === p.booking_id}
+                          onClick={() => handleApprove(p.booking_id)}
+                        >
+                          {approvingId === p.booking_id ? 'Approving...' : 'Approve'}
+                        </button>
+                      ) : (
+                        <span className="badge badge-pending">awaiting deposit</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {columns.length === 0 && (
             <div className="card schedule-empty">
-              <p className="muted">No confirmed appointments on this day.</p>
+              <p className="muted">Nothing on the book for this day yet.</p>
             </div>
           )}
 
-          {schedule.appointments.length > 0 && (
-            <div className="timeline">
-              {schedule.appointments.map((a, index) => (
-                <div key={`${a.booking_id}-${index}`} className="timeline-row">
-                  <div className="timeline-time">
-                    <span className="timeline-start">
-                      {new Date(a.start_time).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                    <span className="timeline-end muted">
-                      {new Date(a.end_time).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  <div className="timeline-dot" />
-                  <div className="card timeline-card">
-                    <div className="timeline-card-main">
-                      <strong>{a.service_name}</strong>
-                      <p className="muted">
-                        {a.customer_name || 'Customer'}
-                        {a.customer_phone ? ` · ${a.customer_phone}` : ''}
-                      </p>
-                      <div className="timeline-chips">
-                        {a.staff_name && <span className="chip">{a.staff_name}</span>}
-                        {!branchId && branchName(a.branch_id) && (
-                          <span className="chip chip-branch">{branchName(a.branch_id)}</span>
-                        )}
-                      </div>
+          {columns.length > 0 && (
+            <div className="daygrid-scroll">
+              <div className="daygrid" style={{ height: GRID_HEIGHT + 34 }}>
+                <div className="daygrid-gutter">
+                  <div className="daygrid-corner" />
+                  {hours.map((h) => (
+                    <div key={h} className="daygrid-hour-label" style={{ height: HOUR_PX }}>
+                      {String(h).padStart(2, '0')}:00
                     </div>
-                    <div className="timeline-card-side">
-                      <span className="service-price">£{a.price}</span>
-                      <span className={`badge badge-${a.status}`}>
-                        {a.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+
+                {columns.map((col) => (
+                  <div key={col.key} className="daygrid-col">
+                    <div className="daygrid-col-head">
+                      <span className="daygrid-staff">{col.staffName}</span>
+                      {!branchId && branchName(col.branchId) && (
+                        <span className="chip chip-branch">{branchName(col.branchId)}</span>
+                      )}
+                    </div>
+                    <div className="daygrid-col-body" style={{ height: GRID_HEIGHT }}>
+                      {showNowLine && (
+                        <div
+                          className="daygrid-now"
+                          style={{ top: (nowMinutes / 60) * HOUR_PX }}
+                        />
+                      )}
+                      {col.appointments.map((a, i) => {
+                        const top = Math.max(0, (minutesFromOpen(a.start_time) / 60) * HOUR_PX)
+                        const rawHeight =
+                          ((minutesFromOpen(a.end_time) - minutesFromOpen(a.start_time)) / 60) *
+                          HOUR_PX
+                        const height = Math.max(30, rawHeight)
+                        return (
+                          <div
+                            key={`${a.booking_id}-${i}`}
+                            className={`daygrid-event daygrid-event-${a.status}`}
+                            style={{ top, height }}
+                            title={`${fmtTime(a.start_time)}–${fmtTime(a.end_time)} ${a.service_name}`}
+                          >
+                            <span className="daygrid-event-time">
+                              {fmtTime(a.start_time)}–{fmtTime(a.end_time)}
+                            </span>
+                            <span className="daygrid-event-service">{a.service_name}</span>
+                            <span className="daygrid-event-customer">
+                              {a.customer_name || 'Customer'} · £{a.price}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </>
