@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import SlotLockManager from '../components/SlotLockManager'
 
 const STATUS_LABELS = {
   pending: 'Pending',
@@ -98,6 +99,8 @@ export default function DashboardPage() {
           </div>
         </>
       )}
+
+      {branchId && <SlotLockManager branchId={branchId} token={auth.token} />}
 
       {summary && (
         <>

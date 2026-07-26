@@ -10,6 +10,12 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function horizonIso() {
+  const limit = new Date()
+  limit.setDate(limit.getDate() + 365)
+  return limit.toISOString().slice(0, 10)
+}
+
 export default function CartPage() {
   const { cart, totals, removeItem, clear } = useCart()
   const { auth } = useAuth()
@@ -179,6 +185,7 @@ export default function CartPage() {
               className="input"
               type="date"
               min={todayIso()}
+              max={horizonIso()}
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />

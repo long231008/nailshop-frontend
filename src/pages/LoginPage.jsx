@@ -9,13 +9,17 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const next = searchParams.get('next') || '/'
 
-  const [step, setStep] = useState('phone')
+  const [step, setStep] = useState('identifier')
+  const [method, setMethod] = useState('phone')
   const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
   const [pendingId, setPendingId] = useState(null)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
+
+  const identifier = method === 'phone' ? phone : email
 
   useEffect(() => {
     if (resendIn <= 0) return
@@ -27,7 +31,8 @@ export default function LoginPage() {
     setError(null)
     setBusy(true)
     try {
-      const result = await api.requestOtp({ phone_number: phone })
+      const payload = method === 'phone' ? { phone_number: phone } : { email }
+      const result = await api.requestOtp(payload)
       setPendingId(result.pending_id)
       setStep('otp')
       setOtp('')
@@ -71,22 +76,54 @@ export default function LoginPage() {
     <div className="container container-narrow">
       <h1>Welcome back</h1>
       <p className="muted">
-        Enter your phone number and we&apos;ll text you a one-time code — no password needed.
+        Enter your phone number or email and we&apos;ll send you a one-time code — no password
+        needed.
       </p>
 
-      {step === 'phone' && (
+      {step === 'identifier' && (
         <form onSubmit={handleSendCode} className="card form-stack">
-          <label>
-            Phone number
-            <input
-              className="input"
-              type="tel"
-              required
-              placeholder="0901234567"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </label>
+          <div className="method-toggle">
+            <button
+              type="button"
+              className={'btn btn-outline' + (method === 'phone' ? ' method-active' : '')}
+              onClick={() => setMethod('phone')}
+            >
+              Phone
+            </button>
+            <button
+              type="button"
+              className={'btn btn-outline' + (method === 'email' ? ' method-active' : '')}
+              onClick={() => setMethod('email')}
+            >
+              Email
+            </button>
+          </div>
+
+          {method === 'phone' ? (
+            <label>
+              Phone number
+              <input
+                className="input"
+                type="tel"
+                required
+                placeholder="0901234567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </label>
+          ) : (
+            <label>
+              Email address
+              <input
+                className="input"
+                type="email"
+                required
+                placeholder="you@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </label>
+          )}
           {error && <p className="error-text">{error}</p>}
           <button className="btn" type="submit" disabled={busy}>
             {busy ? 'Sending code...' : 'Send verification code'}
@@ -97,7 +134,7 @@ export default function LoginPage() {
       {step === 'otp' && (
         <form onSubmit={handleVerify} className="card form-stack">
           <p className="muted">
-            Enter the 6-digit code we sent to <strong>{phone}</strong>.
+            Enter the 6-digit code we sent to <strong>{identifier}</strong>.
           </p>
           <label>
             Verification code

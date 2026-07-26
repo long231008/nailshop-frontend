@@ -54,6 +54,19 @@ export const api = {
     request('/app/me', { method: 'PATCH', body: payload, token }),
   giftPreview: (branchId, total) =>
     request(`/app/discounts/gift-preview?branch_id=${branchId}&total=${total}`),
+  listStaff: (branchId, token) => request(`/app/staff?branch_id=${branchId}`, { token }),
+  setSlotLockPermission: (staffId, enabled, token) =>
+    request(`/app/admin/staff/${staffId}/slot-lock-permission`, {
+      method: 'POST',
+      body: { enabled },
+      token,
+    }),
+  listSlotLocks: (branchId, token) =>
+    request(`/app/slot-locks?branch_id=${branchId}`, { token }),
+  createSlotLock: (payload, token) =>
+    request('/app/slot-locks', { method: 'POST', body: payload, token }),
+  deleteSlotLock: (lockId, token) =>
+    request(`/app/slot-locks/${lockId}`, { method: 'DELETE', token }),
   dashboardSummary: (branchId, token) =>
     request(`/app/dashboard/summary${branchId ? `?branch_id=${branchId}` : ''}`, { token }),
   dashboardRevenue: (branchId, token) =>
