@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext'
 // Nail art is priced per design, so "adding it to the cart" starts a quote
 // request: a photo of the design, or - if there is no photo - a description of
 // what the customer wants.
+const FACEBOOK_PAGE_URL = import.meta.env.VITE_FACEBOOK_PAGE_URL
+
 export default function DesignRequestModal({ service, branch, onClose }) {
   const { auth } = useAuth()
   const navigate = useNavigate()
@@ -93,6 +95,20 @@ export default function DesignRequestModal({ service, branch, onClose }) {
                 </button>
               </div>
             </form>
+
+            {FACEBOOK_PAGE_URL && (
+              <>
+                <div className="divider">or</div>
+                <a
+                  href={FACEBOOK_PAGE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-outline google-btn"
+                >
+                  Chat with us on Messenger
+                </a>
+              </>
+            )}
           </>
         )}
       </div>

@@ -4,6 +4,8 @@ import { api } from '../api/client'
 import DesignRequestModal from '../components/DesignRequestModal'
 import { useCart } from '../context/CartContext'
 
+const FACEBOOK_PAGE_URL = import.meta.env.VITE_FACEBOOK_PAGE_URL
+
 const CATEGORY_LABELS = {
   polish: 'Polish',
   gel: 'Gel',
@@ -79,8 +81,17 @@ export default function BranchDetailPage() {
           <h2>{CATEGORY_LABELS[category] || category}</h2>
           {category === 'addon' && (
             <div className="gift-banner design-invite">
-              Have your own design in mind? <Link to="/designs">Send us a photo</Link> and
-              we&apos;ll quote a price before you book.
+              Nail art is priced per design. Tap <strong>Add to cart</strong> to send a photo or
+              describe what you want — we&apos;ll quote a price before you book
+              {FACEBOOK_PAGE_URL ? (
+                <>
+                  , or{' '}
+                  <a href={FACEBOOK_PAGE_URL} target="_blank" rel="noreferrer">
+                    ask us on Messenger
+                  </a>
+                </>
+              ) : null}
+              . Past requests live in <Link to="/designs">My designs</Link>.
             </div>
           )}
           <div className="service-list">
