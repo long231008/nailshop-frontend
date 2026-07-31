@@ -130,4 +130,21 @@ export const api = {
     request(`/app/dashboard/summary${branchId ? `?branch_id=${branchId}` : ''}`, { token }),
   dashboardRevenue: (branchId, token) =>
     request(`/app/dashboard/revenue${branchId ? `?branch_id=${branchId}` : ''}`, { token }),
+  // Capability matrix (price list + per-tech real minutes) - the scheduler's
+  // single source of truth.
+  capabilityMatrix: (token) => request('/app/capability/matrix', { token }),
+  saveCapabilityMatrix: (payload, token) =>
+    request('/app/capability/matrix', { method: 'PUT', body: payload, token }),
+  // Nightly allocation (21:00 close): status, manual re-run, walk-in options.
+  allocationStatus: (targetDate, branchId, token) =>
+    request(
+      `/app/allocation/status?target_date=${targetDate}${branchId ? `&branch_id=${branchId}` : ''}`,
+      { token }
+    ),
+  runAllocation: (payload, token) =>
+    request('/app/allocation/run', { method: 'POST', body: payload, token }),
+  walkinOptions: (branchId, serviceId, token) =>
+    request(`/app/allocation/walkin-options?branch_id=${branchId}&service_id=${serviceId}`, {
+      token,
+    }),
 }

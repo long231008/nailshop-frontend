@@ -5,15 +5,20 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 const DAILY_LIMIT_MINUTES = 120
+// Bookings for a day close at 21:00 the evening before (the salon then assigns
+// technicians), so online booking starts from tomorrow and spans 14 days.
+const BOOKING_HORIZON_DAYS = 14
 const FACEBOOK_PAGE_URL = import.meta.env.VITE_FACEBOOK_PAGE_URL
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10)
+function tomorrowIso() {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().slice(0, 10)
 }
 
 function horizonIso() {
   const limit = new Date()
-  limit.setDate(limit.getDate() + 365)
+  limit.setDate(limit.getDate() + BOOKING_HORIZON_DAYS)
   return limit.toISOString().slice(0, 10)
 }
 
@@ -32,8 +37,9 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
   const { auth } = useAuth()
   const navigate = useNavigate()
 
-  const [date, setDate] = useState(todayIso())
+  const [date, setDate] = useState(tomorrowIso())
   const [slots, setSlots] = useState(null)
+  const [bookingWindow, setBookingWindow] = useState('open')
   const [lockedRanges, setLockedRanges] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [giftMessage, setGiftMessage] = useState(null)
@@ -52,28 +58,31 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
       .catch(() => setGiftMessage(null))
   }, [branchId, totalPrice])
 
+  const serviceIds = branchItems.map((item) => item.serviceId).join(',')
+
   useEffect(() => {
     if (!date || overDailyLimit) return
     setSlots(null)
     setSelectedSlot(null)
+    setBookingWindow('open')
     setLockedRanges([])
     if (isSunday(date)) return
     api
       .getAvailability({
         branch_id: branchId,
-        service_id: branchItems[0].serviceId,
+        service_ids: serviceIds,
         date,
-        duration_min: totalDuration,
       })
-      .then(setSlots)
+      .then((data) => {
+        setBookingWindow(data.window)
+        setSlots(data.slots)
+      })
       .catch(() => setSlots([]))
     api
       .publicLockedRanges(branchId, date)
       .then(setLockedRanges)
       .catch(() => setLockedRanges([]))
-    // branchItems identity changes on every cart edit; serviceId/duration cover it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branchId, date, totalDuration, overDailyLimit])
+  }, [branchId, date, serviceIds, overDailyLimit])
 
   // Free slots plus locked quarter-hours, merged into one chronological strip so
   // locked times show crossed out instead of silently vanishing.
@@ -103,19 +112,13 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
     setBookError(null)
     setBusy(true)
     try {
-      let offsetMin = 0
-      const items = branchItems.map((item) => {
-        const start = new Date(
-          new Date(selectedSlot.start_time).getTime() + offsetMin * 60000
-        ).toISOString()
-        offsetMin += item.durationMin
-        return {
-          service_id: item.serviceId,
-          staff_id: selectedSlot.staff_id,
-          start_time: start,
-          custom_design_id: item.designId || null,
-        }
-      })
+      // The server lays the visit out back-to-back from the slot's start and
+      // assigns technicians at the nightly close - no staff is picked here.
+      const items = branchItems.map((item) => ({
+        service_id: item.serviceId,
+        start_time: selectedSlot.start_time,
+        custom_design_id: item.designId || null,
+      }))
       const result = await api.createBooking({ branch_id: branchId, items }, auth.token)
       onBooked(branchId, result)
     } catch (err) {
@@ -182,7 +185,7 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
             <input
               className="input"
               type="date"
-              min={todayIso()}
+              min={tomorrowIso()}
               max={horizonIso()}
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -206,18 +209,34 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
             </div>
           )}
 
-          {!isSunday(date) && slotEntries === null && (
-            <p className="muted">Loading available times...</p>
+          {!isSunday(date) && bookingWindow === 'closed' && (
+            <div className="gift-banner">
+              Bookings for this day closed at 21:00 the evening before — the salon is assigning
+              its technicians. Please walk in, or pick a later day.
+            </div>
           )}
-          {!isSunday(date) && slotEntries !== null && slotEntries.length === 0 && (
-            <p className="muted">
-              No time can fit all {branchItems.length}{' '}
-              {branchItems.length === 1 ? 'treatment' : 'treatments'} on this date. Try another
+          {!isSunday(date) && bookingWindow === 'too_far' && (
+            <div className="gift-banner">
+              We take bookings up to {BOOKING_HORIZON_DAYS} days ahead. Please pick an earlier
               day.
-            </p>
+            </div>
           )}
 
-          {slotEntries && slotEntries.length > 0 && !isSunday(date) && (
+          {!isSunday(date) && bookingWindow === 'open' && slotEntries === null && (
+            <p className="muted">Loading available times...</p>
+          )}
+          {!isSunday(date) &&
+            bookingWindow === 'open' &&
+            slotEntries !== null &&
+            slotEntries.length === 0 && (
+              <p className="muted">
+                No time can fit all {branchItems.length}{' '}
+                {branchItems.length === 1 ? 'treatment' : 'treatments'} on this date. Try another
+                day.
+              </p>
+            )}
+
+          {slotEntries && slotEntries.length > 0 && !isSunday(date) && bookingWindow === 'open' && (
             <div className="slot-grid">
               {slotEntries.map((entry) =>
                 entry.locked ? (
@@ -247,6 +266,12 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
                 )
               )}
             </div>
+          )}
+
+          {selectedSlot && (
+            <p className="muted">
+              The salon will assign you a suitable technician the evening before your visit.
+            </p>
           )}
 
           {bookError && <p className="error-text">{bookError}</p>}
