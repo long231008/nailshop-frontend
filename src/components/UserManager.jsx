@@ -37,7 +37,7 @@ export default function UserManager({ branches, token }) {
 
   const startGrant = (user) => {
     setGrantingId(user.id)
-    setGrantBranchId(user.staff_branch_id || branches[0]?.id || '')
+    setGrantBranchId(user.staff_branch_id || '')
     setGrantName(user.staff_display_name || '')
   }
 
@@ -45,9 +45,10 @@ export default function UserManager({ branches, token }) {
     setError(null)
     setBusy(true)
     try {
+      // Technicians belong to the chain; the branch is only a home preference.
       await api.grantStaff(
         userId,
-        { branch_id: grantBranchId, display_name: grantName },
+        { branch_id: grantBranchId || null, display_name: grantName },
         token
       )
       setGrantingId(null)
@@ -157,7 +158,10 @@ export default function UserManager({ branches, token }) {
                   {user.staff_display_name && user.staff_status === 'active' && (
                     <>
                       {' '}
-                      — {user.staff_display_name} @ {branchName(user.staff_branch_id)}
+                      — {user.staff_display_name} @{' '}
+                      {user.staff_branch_id
+                        ? `${branchName(user.staff_branch_id)} (home)`
+                        : 'whole chain'}
                     </>
                   )}
                 </p>
@@ -241,9 +245,10 @@ export default function UserManager({ branches, token }) {
                     value={grantBranchId}
                     onChange={(e) => setGrantBranchId(e.target.value)}
                   >
+                    <option value="">Whole chain (no home branch)</option>
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
-                        {b.name}
+                        {b.name} (home branch)
                       </option>
                     ))}
                   </select>

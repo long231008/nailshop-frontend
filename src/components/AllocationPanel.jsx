@@ -93,6 +93,32 @@ export default function AllocationPanel({ branchId, token }) {
               </p>
             )}
 
+            {status.roster.length > 0 && (
+              <>
+                <h3 style={{ marginTop: '1rem' }}>Who works where</h3>
+                <div className="roster-list">
+                  {status.roster.map((entry) => (
+                    <div key={entry.staff_id} className="roster-row">
+                      <strong>{entry.staff_name}</strong>
+                      <span className="muted"> → {entry.branch_name} </span>
+                      <span
+                        className={
+                          'roster-badge' + (entry.source === 'pin' ? ' roster-badge-pin' : '')
+                        }
+                        title={
+                          entry.source === 'pin'
+                            ? 'A customer booked this technician by name - cannot be moved'
+                            : 'Placed by the nightly allocation'
+                        }
+                      >
+                        {entry.source === 'pin' ? '📌 requested' : 'auto'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
             {status.unassigned.length > 0 && (
               <>
                 <p className="error-text" style={{ marginTop: '0.75rem' }}>

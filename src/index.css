@@ -1545,3 +1545,31 @@ textarea.input {
   gap: 0.3rem;
   font-size: 0.9rem;
 }
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.roster-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.roster-badge {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 99px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #555;
+}
+
+.roster-badge-pin {
+  background: #fdf1d6;
+  border-color: #d9a413;
+  color: #7a5b00;
+}
