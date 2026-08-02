@@ -477,8 +477,9 @@ export default function CapabilityMatrix({ token }) {
           {saveResult.affected_bookings.length > 0 && (
             <>
               <p className="error-text">
-                {saveResult.affected_bookings.length} future booking(s) named a technician who
-                can no longer do that service — please call these customers:
+                {saveResult.affected_bookings.length} future booking(s) are assigned to a
+                technician who can no longer do that service — reassign them in the allocation
+                panel or call the customer:
               </p>
               <ul>
                 {saveResult.affected_bookings.map((b, i) => (

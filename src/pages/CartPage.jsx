@@ -42,6 +42,8 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
   const [bookingWindow, setBookingWindow] = useState('open')
   const [lockedRanges, setLockedRanges] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
+  const [technicians, setTechnicians] = useState([])
+  const [wishedStaffId, setWishedStaffId] = useState('')
   const [giftMessage, setGiftMessage] = useState(null)
   const [bookError, setBookError] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -82,6 +84,12 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
       .publicLockedRanges(branchId, date)
       .then(setLockedRanges)
       .catch(() => setLockedRanges([]))
+    // Who works that day, for the optional technician wish.
+    setWishedStaffId('')
+    api
+      .listBranchTechnicians(branchId, date)
+      .then(setTechnicians)
+      .catch(() => setTechnicians([]))
   }, [branchId, date, serviceIds, overDailyLimit])
 
   // Free slots plus locked quarter-hours, merged into one chronological strip so
@@ -113,11 +121,13 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
     setBusy(true)
     try {
       // The server lays the visit out back-to-back from the slot's start and
-      // assigns technicians at the nightly close - no staff is picked here.
+      // assigns technicians at the nightly close. A wished technician rides
+      // along as a note (staff_id) - the salon grants it by hand if it fits.
       const items = branchItems.map((item) => ({
         service_id: item.serviceId,
         start_time: selectedSlot.start_time,
         custom_design_id: item.designId || null,
+        staff_id: wishedStaffId || null,
       }))
       const result = await api.createBooking({ branch_id: branchId, items }, auth.token)
       onBooked(branchId, result)
@@ -212,7 +222,21 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
           {!isSunday(date) && bookingWindow === 'closed' && (
             <div className="gift-banner">
               Bookings for this day closed at 21:00 the evening before — the salon is assigning
-              its technicians. Please walk in, or pick a later day.
+              its technicians. Please pick a later day.
+            </div>
+          )}
+          {!isSunday(date) && bookingWindow === 'closed_day' && (
+            <div className="gift-banner">
+              We&apos;re closed on this day. Please pick another date
+              {FACEBOOK_PAGE_URL ? (
+                <>
+                  {' or '}
+                  <a href={FACEBOOK_PAGE_URL} target="_blank" rel="noreferrer">
+                    message us on Facebook
+                  </a>
+                </>
+              ) : null}
+              .
             </div>
           )}
           {!isSunday(date) && bookingWindow === 'too_far' && (
@@ -268,9 +292,29 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
             </div>
           )}
 
+          {selectedSlot && technicians.length > 0 && (
+            <label>
+              Preferred technician (optional)
+              <select
+                className="input"
+                value={wishedStaffId}
+                onChange={(e) => setWishedStaffId(e.target.value)}
+              >
+                <option value="">No preference</option>
+                {technicians.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.display_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           {selectedSlot && (
             <p className="muted">
-              The salon will assign you a suitable technician the evening before your visit.
+              {wishedStaffId
+                ? 'We will pass your technician wish to the salon — they will do their best, but it cannot be guaranteed.'
+                : 'The salon will assign you a suitable technician the evening before your visit.'}
             </p>
           )}
 

@@ -8,13 +8,17 @@ function tomorrowIso() {
 }
 
 // The nightly close: bookings for a day freeze at 21:00 the evening before,
-// then every any-tech booking gets its technician. This panel shows how the
-// run went and lets an admin re-run it (e.g. after a sick call).
+// then the allocator assigns technicians freely (fairness first - customer
+// wishes are deliberately NOT an input). This panel shows how the run went,
+// lists the wishes, and lets a manager grant one by hand when the finished
+// schedule has room - or re-run the day after a sick call.
 export default function AllocationPanel({ branchId, token }) {
   const [date, setDate] = useState(tomorrowIso())
   const [status, setStatus] = useState(null)
   const [error, setError] = useState(null)
   const [running, setRunning] = useState(false)
+  const [releaseStaffId, setReleaseStaffId] = useState('')
+  const [grantingId, setGrantingId] = useState(null)
 
   const load = useCallback(() => {
     setError(null)
@@ -26,6 +30,7 @@ export default function AllocationPanel({ branchId, token }) {
 
   useEffect(() => {
     setStatus(null)
+    setReleaseStaffId('')
     load()
   }, [load])
 
@@ -34,14 +39,34 @@ export default function AllocationPanel({ branchId, token }) {
     setError(null)
     try {
       await api.runAllocation(
-        { target_date: date, branch_id: branchId || null },
+        {
+          target_date: date,
+          branch_id: branchId || null,
+          release_staff_id: releaseStaffId || null,
+        },
         token
       )
+      setReleaseStaffId('')
       load()
     } catch (err) {
       setError(err.message)
     } finally {
       setRunning(false)
+    }
+  }
+
+  // Granting a wish = moving that leg onto the wished technician. The server
+  // re-checks conflicts, hours and skills, so this can never double-book.
+  const handleGrant = async (pref) => {
+    setGrantingId(pref.booking_detail_id)
+    setError(null)
+    try {
+      await api.reassignLeg(pref.booking_detail_id, pref.preferred_staff_id, token)
+      load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGrantingId(null)
     }
   }
 
@@ -61,8 +86,29 @@ export default function AllocationPanel({ branchId, token }) {
               onChange={(e) => setDate(e.target.value)}
             />
           </label>
+          {status?.roster?.length > 0 && (
+            <label>
+              Sick / release technician
+              <select
+                className="input"
+                value={releaseStaffId}
+                onChange={(e) => setReleaseStaffId(e.target.value)}
+              >
+                <option value="">Nobody — just re-run</option>
+                {status.roster.map((entry) => (
+                  <option key={entry.staff_id} value={entry.staff_id}>
+                    {entry.staff_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button type="button" className="btn" disabled={running} onClick={handleRun}>
-            {running ? 'Assigning...' : 'Assign technicians now'}
+            {running
+              ? 'Assigning...'
+              : releaseStaffId
+                ? 'Release & reassign their bookings'
+                : 'Assign technicians now'}
           </button>
         </div>
 
@@ -101,18 +147,54 @@ export default function AllocationPanel({ branchId, token }) {
                     <div key={entry.staff_id} className="roster-row">
                       <strong>{entry.staff_name}</strong>
                       <span className="muted"> → {entry.branch_name} </span>
-                      <span
-                        className={
-                          'roster-badge' + (entry.source === 'pin' ? ' roster-badge-pin' : '')
-                        }
-                        title={
-                          entry.source === 'pin'
-                            ? 'A customer booked this technician by name - cannot be moved'
-                            : 'Placed by the nightly allocation'
-                        }
-                      >
-                        {entry.source === 'pin' ? '📌 requested' : 'auto'}
+                      <span className="roster-badge" title="Placed by the nightly allocation">
+                        auto
                       </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {status.preferences.length > 0 && (
+              <>
+                <h3 style={{ marginTop: '1rem' }}>Customer wishes</h3>
+                <p className="muted">
+                  The allocator ignores wishes on purpose (fairness first). Granted ✓ means the
+                  wish came true by itself; for the rest, the button moves that leg onto the
+                  wished technician — it only works when their schedule has room.
+                </p>
+                <div className="roster-list">
+                  {status.preferences.map((pref) => (
+                    <div key={pref.booking_detail_id} className="roster-row">
+                      <strong>
+                        {new Date(pref.start_time).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        · {pref.service_name}
+                      </strong>
+                      <span className="muted">
+                        {' '}
+                        wants {pref.preferred_staff_name} · now:{' '}
+                        {pref.assigned_staff_name || 'unassigned'}{' '}
+                      </span>
+                      {pref.honoured ? (
+                        <span className="roster-badge" title="The wish came true">
+                          ✓ granted
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          disabled={grantingId === pref.booking_detail_id}
+                          onClick={() => handleGrant(pref)}
+                        >
+                          {grantingId === pref.booking_detail_id
+                            ? 'Moving...'
+                            : `Give to ${pref.preferred_staff_name}`}
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

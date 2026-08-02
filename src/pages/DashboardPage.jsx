@@ -128,10 +128,6 @@ export default function DashboardPage() {
 
           <div className="stat-row" style={{ marginTop: '0.75rem' }}>
             <div className="stat-tile">
-              <span className="muted">Queue waiting</span>
-              <strong>{summary.queue_waiting_count}</strong>
-            </div>
-            <div className="stat-tile">
               <span className="muted">Pending custom designs</span>
               <strong>{summary.pending_custom_designs}</strong>
             </div>

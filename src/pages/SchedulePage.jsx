@@ -241,6 +241,10 @@ export default function SchedulePage() {
                               {!branchId && branchName(a.branch_id)
                                 ? ` · ${branchName(a.branch_id)}`
                                 : ''}
+                              {' · '}
+                              {a.staff_name
+                                ? `with ${a.staff_name}`
+                                : 'technician assigned at 21:00'}
                             </p>
                             {a.design_description && (
                               <p className="muted">Design: {a.design_description}</p>

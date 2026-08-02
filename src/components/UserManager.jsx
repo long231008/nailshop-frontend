@@ -114,6 +114,26 @@ export default function UserManager({ branches, token }) {
     }
   }
 
+  // The salon-side cancel: no notice window, any owner. Paid deposits are
+  // handled by the refund flow, so the confirm text says so.
+  const submitSalonCancel = async (booking) => {
+    const confirmed = window.confirm(
+      `Cancel this ${booking.booking_date} booking on behalf of the salon?\n\n` +
+        'The customer is notified. If a deposit was paid, arrange the refund separately.'
+    )
+    if (!confirmed) return
+    setError(null)
+    setBusy(true)
+    try {
+      await api.salonCancelBooking(booking.id, token)
+      setUserBookings(await api.adminUserBookings(bookingsUserId, token))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <>
       <h2 className="dash-heading">User accounts</h2>
@@ -232,6 +252,15 @@ export default function UserManager({ branches, token }) {
                           <span className={`badge badge-${b.status}`}>
                             {b.status.replace('_', ' ')}
                           </span>
+                          {(b.status === 'pending' || b.status === 'approved') && (
+                            <button
+                              className="btn btn-danger-outline"
+                              disabled={busy}
+                              onClick={() => submitSalonCancel(b)}
+                            >
+                              Cancel (salon)
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

@@ -135,7 +135,8 @@ export const api = {
   capabilityMatrix: (token) => request('/app/capability/matrix', { token }),
   saveCapabilityMatrix: (payload, token) =>
     request('/app/capability/matrix', { method: 'PUT', body: payload, token }),
-  // Nightly allocation (21:00 close): status, manual re-run, walk-in options.
+  // Nightly allocation (21:00 close): status, manual re-run, and the manual
+  // reassignment a manager uses to grant a customer's technician wish.
   allocationStatus: (targetDate, branchId, token) =>
     request(
       `/app/allocation/status?target_date=${targetDate}${branchId ? `&branch_id=${branchId}` : ''}`,
@@ -143,8 +144,16 @@ export const api = {
     ),
   runAllocation: (payload, token) =>
     request('/app/allocation/run', { method: 'POST', body: payload, token }),
-  walkinOptions: (branchId, serviceId, token) =>
-    request(`/app/allocation/walkin-options?branch_id=${branchId}&service_id=${serviceId}`, {
+  reassignLeg: (bookingDetailId, staffId, token) =>
+    request('/app/allocation/reassign', {
+      method: 'POST',
+      body: { booking_detail_id: bookingDetailId, staff_id: staffId },
       token,
     }),
+  // Public: who a customer may wish for. With a date the list drops techs on
+  // their weekly day off.
+  listBranchTechnicians: (branchId, date) =>
+    request(`/app/branches/${branchId}/technicians${date ? `?date=${date}` : ''}`),
+  salonCancelBooking: (bookingId, token) =>
+    request(`/app/bookings/${bookingId}/salon-cancel`, { method: 'POST', token }),
 }
