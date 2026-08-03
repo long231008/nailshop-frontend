@@ -190,8 +190,20 @@ export default function CapabilityMatrix({ token }) {
     link.click()
   }
 
-  if (error && !services) return <p className="error-text">{error}</p>
-  if (!services) return <p className="muted">Loading price list & capability matrix...</p>
+  // The heading stays put even while loading or after a failed load, like every
+  // other dashboard panel: a section that vanishes entirely reads as "this
+  // feature does not exist" instead of "this feature could not load".
+  if (!services)
+    return (
+      <section className="matrix-section">
+        <h2 className="dash-heading">Price list &amp; technician capability</h2>
+        {error ? (
+          <p className="error-text">{error}</p>
+        ) : (
+          <p className="muted">Loading price list &amp; capability matrix...</p>
+        )}
+      </section>
+    )
 
   const sellable = services.filter((s) => coverage[s._key] > 0).length
 
