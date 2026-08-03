@@ -51,7 +51,15 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
   const branchName = branchItems[0].branchName
   const totalPrice = branchItems.reduce((sum, item) => sum + item.price, 0)
   const totalDuration = branchItems.reduce((sum, item) => sum + item.durationMin, 0)
-  const overDailyLimit = totalDuration > DAILY_LIMIT_MINUTES
+  // Menu minutes are only what customers read: the salon holds every leg for the
+  // slowest capable technician's real minutes, so the same treatments can book
+  // longer than the menu says. A returned slot spans the whole visit, so its own
+  // length is what the daily cap is really measured against - the menu total is
+  // just the estimate used until the first slots arrive.
+  const plannedDuration = slots?.length
+    ? Math.round((new Date(slots[0].end_time) - new Date(slots[0].start_time)) / 60000)
+    : totalDuration
+  const overDailyLimit = plannedDuration > DAILY_LIMIT_MINUTES
 
   useEffect(() => {
     api
@@ -63,7 +71,7 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
   const serviceIds = branchItems.map((item) => item.serviceId).join(',')
 
   useEffect(() => {
-    if (!date || overDailyLimit) return
+    if (!date) return
     setSlots(null)
     setSelectedSlot(null)
     setBookingWindow('open')
@@ -90,7 +98,7 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
       .listBranchTechnicians(branchId, date)
       .then(setTechnicians)
       .catch(() => setTechnicians([]))
-  }, [branchId, date, serviceIds, overDailyLimit])
+  }, [branchId, date, serviceIds])
 
   // Free slots plus locked quarter-hours, merged into one chronological strip so
   // locked times show crossed out instead of silently vanishing.

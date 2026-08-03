@@ -31,6 +31,13 @@ async function request(path, { method = 'GET', body, token } = {}) {
       // Session expired: let AuthContext clear it and bounce to the login page.
       window.dispatchEvent(new Event('nailshop:session-expired'))
     }
+    // An unmatched route answers with FastAPI's bare "Not Found" (or with no
+    // JSON at all). That means the API has no such endpoint - it is older than
+    // this app - which is a different problem from "that record does not
+    // exist", and the bare wording sends people hunting for the wrong thing.
+    if (res.status === 404 && (detail === undefined || detail === null || detail === 'Not Found')) {
+      detail = `The API has no ${path} endpoint - the server is probably running an older version than this app.`
+    }
     throw new ApiError(res.status, detail)
   }
 
