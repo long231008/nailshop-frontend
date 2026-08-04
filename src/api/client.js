@@ -163,4 +163,25 @@ export const api = {
     request(`/app/branches/${branchId}/technicians${date ? `?date=${date}` : ''}`),
   salonCancelBooking: (bookingId, token) =>
     request(`/app/bookings/${bookingId}/salon-cancel`, { method: 'POST', token }),
+  // Branch physical capacity (pedicure chairs / tables / massage beds).
+  updateBranch: (branchId, payload, token) =>
+    request(`/app/branches/${branchId}`, { method: 'PATCH', body: payload, token }),
+  // Staff leave: a technician off for a time range, chain-wide.
+  listLeaves: (params, token) =>
+    request(`/app/leaves?${new URLSearchParams(params).toString()}`, { token }),
+  createLeave: (payload, token) =>
+    request('/app/leaves', { method: 'POST', body: payload, token }),
+  deleteLeave: (leaveId, token) =>
+    request(`/app/leaves/${leaveId}`, { method: 'DELETE', token }),
+  // Desk schedule management: add / move / remove an appointment.
+  addAppointment: (payload, token) =>
+    request('/app/schedule/appointments', { method: 'POST', body: payload, token }),
+  moveAppointment: (bookingId, newStartTime, token) =>
+    request(`/app/schedule/appointments/${bookingId}`, {
+      method: 'PATCH',
+      body: { new_start_time: newStartTime },
+      token,
+    }),
+  deleteAppointment: (bookingId, token) =>
+    request(`/app/schedule/appointments/${bookingId}`, { method: 'DELETE', token }),
 }

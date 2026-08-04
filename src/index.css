@@ -1067,6 +1067,17 @@ textarea.input {
   padding: 0.45rem 0;
 }
 
+.occupancy-detail-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.occupancy-detail-actions .btn {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
 /* ---------- slot lock picker ---------- */
 
 .lock-section {
