@@ -1627,7 +1627,7 @@ textarea.input {
 }
 
 .sheet {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--border);
   padding: 0.9rem 0;
   text-align: left;
 }
@@ -1662,7 +1662,7 @@ textarea.input {
   align-items: baseline;
   font-size: 0.92rem;
   padding: 0.3rem 0;
-  border-bottom: 1px dotted rgba(0, 0, 0, 0.08);
+  border-bottom: 1px dotted var(--border);
 }
 
 .sheet-time {
