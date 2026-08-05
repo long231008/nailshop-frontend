@@ -546,6 +546,28 @@ select {
   border-color: var(--green);
 }
 
+/* Slots that leave the salon no dead time. A hint only - every listed slot is
+   equally bookable, so this stays quieter than the selected state. */
+.slot-btn-recommended {
+  border-color: color-mix(in srgb, var(--green) 55%, transparent);
+}
+
+.slot-star {
+  color: var(--gold, #b8912f);
+  font-size: 0.7em;
+  margin-left: 0.2em;
+  vertical-align: super;
+}
+
+.slot-btn-active .slot-star {
+  color: var(--cream);
+}
+
+.slot-legend {
+  text-align: left;
+  margin-bottom: 0.35rem;
+}
+
 .slot-btn-locked {
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 45%, transparent);

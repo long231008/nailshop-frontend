@@ -268,6 +268,17 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
               </p>
             )}
 
+          {slotEntries &&
+            slotEntries.length > 0 &&
+            !isSunday(date) &&
+            bookingWindow === 'open' &&
+            slotEntries.some((entry) => entry.slot?.recommended) && (
+              <p className="muted slot-legend">
+                <span className="slot-star">★</span> fits our day neatly — pick any time that
+                suits you, they all work.
+              </p>
+            )}
+
           {slotEntries && slotEntries.length > 0 && !isSunday(date) && bookingWindow === 'open' && (
             <div className="slot-grid">
               {slotEntries.map((entry) =>
@@ -289,11 +300,18 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
                       'btn btn-outline slot-btn' +
                       (selectedSlot?.start_time === entry.slot.start_time
                         ? ' slot-btn-active'
-                        : '')
+                        : '') +
+                      (entry.slot.recommended ? ' slot-btn-recommended' : '')
+                    }
+                    title={
+                      entry.slot.recommended
+                        ? 'Fits our day neatly — but any time below works'
+                        : undefined
                     }
                     onClick={() => setSelectedSlot(entry.slot)}
                   >
                     {fmtTime(entry.iso)}
+                    {entry.slot.recommended && <span className="slot-star">★</span>}
                   </button>
                 )
               )}
