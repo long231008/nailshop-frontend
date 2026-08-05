@@ -80,6 +80,22 @@ export default function CapabilityMatrix({ token }) {
     setStaff((prev) => prev.map((t) => (t.id === staffId ? { ...t, [field]: value } : t)))
   }
 
+  // Full time means "no hours of your own": the technician follows the shop's
+  // opening, so nothing is stored and changing the shop's hours moves them too.
+  const setFullTime = (staffId, fullTime) => {
+    setStaff((prev) =>
+      prev.map((t) =>
+        t.id === staffId
+          ? {
+              ...t,
+              work_start_hour: fullTime ? null : 9,
+              work_end_hour: fullTime ? null : 13,
+            }
+          : t
+      )
+    )
+  }
+
   const toggleDayOff = (staffId, day) => {
     setStaff((prev) =>
       prev.map((t) => {
@@ -140,6 +156,14 @@ export default function CapabilityMatrix({ token }) {
         staff: staff.map((t) => ({
           id: t.id,
           days_off: t.days_off,
+          // Null on both is what marks a full-timer, so an empty box must stay
+          // null rather than becoming 0 - that would mean "in from midnight".
+          work_start_hour: t.work_start_hour == null || t.work_start_hour === ''
+            ? null
+            : Number(t.work_start_hour),
+          work_end_hour: t.work_end_hour == null || t.work_end_hour === ''
+            ? null
+            : Number(t.work_end_hour),
           max_hours_week: Number(t.max_hours_week) || 40,
         })),
         capability: Object.fromEntries(
@@ -371,6 +395,7 @@ export default function CapabilityMatrix({ token }) {
                 <th>Technician</th>
                 <th>Status</th>
                 <th>Days off (weekly)</th>
+                <th>Hours</th>
                 <th>Max hours/week</th>
               </tr>
             </thead>
@@ -395,6 +420,39 @@ export default function CapabilityMatrix({ token }) {
                           </button>
                         )
                       })}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="hours-cell">
+                      <label className="hours-toggle">
+                        <input
+                          type="checkbox"
+                          checked={t.work_start_hour == null && t.work_end_hour == null}
+                          onChange={(e) => setFullTime(t.id, e.target.checked)}
+                        />
+                        Full time
+                      </label>
+                      {(t.work_start_hour != null || t.work_end_hour != null) && (
+                        <span className="hours-range">
+                          <input
+                            className="input matrix-input matrix-num"
+                            type="number"
+                            min="0"
+                            max="23"
+                            value={t.work_start_hour ?? ''}
+                            onChange={(e) => updateStaff(t.id, 'work_start_hour', e.target.value)}
+                          />
+                          <span className="muted">to</span>
+                          <input
+                            className="input matrix-input matrix-num"
+                            type="number"
+                            min="1"
+                            max="24"
+                            value={t.work_end_hour ?? ''}
+                            onChange={(e) => updateStaff(t.id, 'work_end_hour', e.target.value)}
+                          />
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td>
