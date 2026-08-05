@@ -216,12 +216,19 @@ export default function CapabilityMatrix({ token }) {
       <p className="muted">
         The menu duration is what customers see. Scheduling runs on each technician&apos;s{' '}
         <strong>real minutes</strong> below — leave a cell empty if that technician cannot do the
-        service. Bookings for a day close at 21:00 the evening before; technicians are then
-        assigned automatically.
+        service. That grid is the whole story: a time is offered when the bookings overlapping it
+        can be shared out among technicians who can each do their own service, so filling the
+        cells honestly is all that is asked of you. Bookings for a day close at 21:00 the evening
+        before; technicians are then assigned automatically.
       </p>
 
       <div className="card matrix-card">
         <h3>1. Price list (what customers see)</h3>
+        <p className="muted">
+          <strong>Skill group</strong> decides where technicians are sent when the chain has more
+          than one salon; it no longer limits how much can be sold. <strong>Chair/room</strong>{' '}
+          ties a service to a physical spot counted under Branch capacity.
+        </p>
         <div className="matrix-scroll">
           <table className="matrix-table">
             <thead>
@@ -416,7 +423,9 @@ export default function CapabilityMatrix({ token }) {
         <h3>3. Capability matrix — real minutes per technician</h3>
         <p className="muted">
           Enter the minutes that technician actually needs (5–240). Empty = cannot do. Orange
-          outline = more than 3× the menu duration, check for a typo.
+          outline = more than 3× the menu duration, check for a typo. Every filled cell widens
+          what the salon can sell at once — an all-rounder counts wherever they are needed, and a
+          service only one technician can do is never sold twice at the same time.
         </p>
         <div className="matrix-scroll">
           <table className="matrix-table">
