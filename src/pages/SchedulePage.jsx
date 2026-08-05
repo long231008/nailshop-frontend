@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { api } from '../api/client'
 import AppointmentComposer from '../components/AppointmentComposer'
+import DaySheets from '../components/DaySheets'
 import ImageLightbox from '../components/ImageLightbox'
 import SlotLockManager from '../components/SlotLockManager'
 import { useAuth } from '../context/AuthContext'
@@ -324,6 +325,12 @@ export default function SchedulePage() {
           {viewing && (
             <ImageLightbox src={viewing} alt="Nail design" onClose={() => setViewing(null)} />
           )}
+
+          <DaySheets
+            branchId={branchId}
+            token={auth.token}
+            isAdmin={auth.role === 'admin'}
+          />
 
           {branchId ? (
             <SlotLockManager branchId={branchId} token={auth.token} initialDate={date} />

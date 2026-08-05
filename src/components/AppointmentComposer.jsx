@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
+// Local HH:MM, which is exactly what <input type="time"> holds - so a suggested
+// time can be dropped straight into the field. toLocaleTimeString would give
+// "10:00 AM" in some locales and the two would never match.
+const hhmm = (iso) => {
+  const at = new Date(iso)
+  return `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`
+}
+
 // Desk-side "add a walk-in / phone booking" for staff and admins. Lands the
 // booking straight on the day grid, optionally with the technician named.
 export default function AppointmentComposer({ branchId, date, token, onAdded }) {
@@ -14,12 +22,34 @@ export default function AppointmentComposer({ branchId, date, token, onAdded }) 
   const [name, setName] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [slots, setSlots] = useState([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
 
   useEffect(() => {
     if (!branchId) return
     api.getBranch(branchId).then((b) => setServices(b.services || [])).catch(() => setServices([]))
     api.listStaff(branchId, token).then(setStaff).catch(() => setStaff([]))
   }, [branchId, token])
+
+  // Which times the salon can still take, for the services picked so far. The
+  // starred ones cost the shop nothing - same hint the customer gets - but
+  // every listed time is bookable, so this stays a suggestion.
+  useEffect(() => {
+    if (!open || !branchId || chosen.length === 0) {
+      setSlots([])
+      return
+    }
+    let live = true
+    setLoadingSlots(true)
+    api
+      .deskSlots({ branch_id: branchId, date, service_ids: chosen.join(',') }, token)
+      .then((data) => live && setSlots(data.slots || []))
+      .catch(() => live && setSlots([]))
+      .finally(() => live && setLoadingSlots(false))
+    return () => {
+      live = false
+    }
+  }, [open, branchId, date, chosen, token])
 
   if (!branchId) {
     return (
@@ -139,6 +169,44 @@ export default function AppointmentComposer({ branchId, date, token, onAdded }) 
           </button>
         ))}
       </div>
+
+      {chosen.length > 0 && (
+        <>
+          <p className="muted slot-legend" style={{ textAlign: 'left', marginTop: '0.75rem' }}>
+            {loadingSlots ? (
+              'Checking what we can take…'
+            ) : slots.length === 0 ? (
+              `Nothing left on ${date} for this combination.`
+            ) : (
+              <>
+                <span className="slot-star">★</span> fits our day neatly — any time here can be
+                booked.
+              </>
+            )}
+          </p>
+          <div className="slot-grid">
+            {slots.map((slot) => {
+              const label = hhmm(slot.start_time)
+              return (
+                <button
+                  key={slot.start_time}
+                  type="button"
+                  className={
+                    'btn btn-outline slot-btn' +
+                    (time === label ? ' slot-btn-active' : '') +
+                    (slot.recommended ? ' slot-btn-recommended' : '')
+                  }
+                  title={slot.recommended ? 'Fits our day neatly' : undefined}
+                  onClick={() => setTime(label)}
+                >
+                  {label}
+                  {slot.recommended && <span className="slot-star">★</span>}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {error && <p className="error-text">{error}</p>}
 

@@ -1619,3 +1619,93 @@ textarea.input {
   border-color: #d9a413;
   color: #7a5b00;
 }
+
+/* Day sheets: one block per technician, and a print layout so the salon can
+   put tomorrow on the staff-room wall. */
+.day-sheets {
+  margin-top: 1.5rem;
+}
+
+.sheet {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.9rem 0;
+  text-align: left;
+}
+
+.sheet-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sheet-empty {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.sheet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sheet-list li {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.92rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.08);
+}
+
+.sheet-time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sheet-service {
+  font-weight: 600;
+}
+
+.sheet-note {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .sheet-list li {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
+@media print {
+  /* Only the sheets go on paper - not the toolbar, the day grid, or the nav. */
+  body * {
+    visibility: hidden;
+  }
+  .day-sheets,
+  .day-sheets * {
+    visibility: visible;
+  }
+  .day-sheets {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .sheet {
+    break-inside: avoid;
+  }
+}

@@ -190,4 +190,12 @@ export const api = {
     }),
   deleteAppointment: (bookingId, token) =>
     request(`/app/schedule/appointments/${bookingId}`, { method: 'DELETE', token }),
+  // Times the desk can still sell, starred where they leave no gap. The
+  // customer availability search refuses today; this one does not.
+  deskSlots: (params, token) =>
+    request(`/app/schedule/slots?${new URLSearchParams(params).toString()}`, { token }),
+  // One schedule per technician for a day. Admins get everyone's, staff get
+  // their own - the backend decides which from the token.
+  daySheets: (params, token) =>
+    request(`/app/schedule/day-sheets?${new URLSearchParams(params).toString()}`, { token }),
 }
