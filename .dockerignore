@@ -1,0 +1,17 @@
+.git
+.gitignore
+.github
+
+node_modules/
+dist/
+
+.env
+.env.example
+
+.vscode/
+.idea/
+Thumbs.db
+
+Dockerfile
+.dockerignore
+README.md
