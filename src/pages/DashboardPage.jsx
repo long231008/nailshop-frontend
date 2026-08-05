@@ -3,8 +3,10 @@ import { Navigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import AllocationPanel from '../components/AllocationPanel'
+import BranchResources from '../components/BranchResources'
 import CapabilityMatrix from '../components/CapabilityMatrix'
 import DesignQuotes from '../components/DesignQuotes'
+import LeaveManager from '../components/LeaveManager'
 import SlotLockManager from '../components/SlotLockManager'
 import UserManager from '../components/UserManager'
 
@@ -109,6 +111,16 @@ export default function DashboardPage() {
       <CapabilityMatrix token={auth.token} />
 
       {branchId && <SlotLockManager branchId={branchId} token={auth.token} showPermissions />}
+
+      {branchId ? (
+        <BranchResources branchId={branchId} token={auth.token} />
+      ) : (
+        <p className="muted" style={{ textAlign: 'left', marginTop: '1.5rem' }}>
+          Pick a specific branch above to set its chairs, tables and beds.
+        </p>
+      )}
+
+      <LeaveManager branchId={branchId} token={auth.token} />
 
       <DesignQuotes token={auth.token} />
 

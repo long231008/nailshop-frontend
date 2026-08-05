@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { api } from '../api/client'
+import AppointmentComposer from '../components/AppointmentComposer'
 import ImageLightbox from '../components/ImageLightbox'
 import SlotLockManager from '../components/SlotLockManager'
 import { useAuth } from '../context/AuthContext'
@@ -71,6 +72,41 @@ export default function SchedulePage() {
     setExpanded(null)
     reload()
   }, [reload])
+
+  const handleMove = async (appointment) => {
+    const current = new Date(appointment.start_time)
+    const hhmm = `${String(current.getHours()).padStart(2, '0')}:${String(
+      current.getMinutes()
+    ).padStart(2, '0')}`
+    const input = window.prompt(`New start time (HH:MM) on ${date}`, hhmm)
+    if (!input) return
+    if (!/^\d{2}:\d{2}$/.test(input)) {
+      setError('Time must be in HH:MM format')
+      return
+    }
+    setError(null)
+    try {
+      await api.moveAppointment(
+        appointment.booking_id,
+        new Date(`${date}T${input}:00`).toISOString(),
+        auth.token
+      )
+      reload()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleRemove = async (appointment) => {
+    if (!window.confirm('Remove this appointment? The customer will be notified.')) return
+    setError(null)
+    try {
+      await api.deleteAppointment(appointment.booking_id, auth.token)
+      reload()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000)
@@ -186,6 +222,13 @@ export default function SchedulePage() {
             </p>
           )}
 
+          <AppointmentComposer
+            branchId={branchId}
+            date={date}
+            token={auth.token}
+            onAdded={reload}
+          />
+
           <div className="occupancy">
             {quarterRows.map((q) => {
               const busy = q.items.length > 0
@@ -253,6 +296,22 @@ export default function SchedulePage() {
                           <span className={`badge badge-${a.status}`}>
                             {a.status.replace('_', ' ')}
                           </span>
+                          <div className="occupancy-detail-actions">
+                            <button
+                              type="button"
+                              className="btn btn-outline"
+                              onClick={() => handleMove(a)}
+                            >
+                              Move
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-danger-outline"
+                              onClick={() => handleRemove(a)}
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

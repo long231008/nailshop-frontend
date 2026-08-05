@@ -8,7 +8,10 @@ import { api } from '../api/client'
 
 const SKILL_GROUPS = ['MANI', 'PEDI', 'GEL', 'DAP_BOT', 'DESIGN', 'WAX', 'KHAC']
 const ZONES = ['HANDS', 'FEET', 'OTHER']
-const RESOURCES = ['', 'PEDI_CHAIR', 'WAX_ROOM']
+// A service claims one physical spot; the branch holds a fixed count of each
+// (set under "Branch capacity"). TABLE / PEDI_CHAIR / MASSAGE_BED are the
+// tracked ones. Leave blank for a service that needs no limited resource.
+const RESOURCES = ['', 'TABLE', 'PEDI_CHAIR', 'MASSAGE_BED', 'WAX_ROOM']
 const CATEGORIES = [
   'polish',
   'gel',
