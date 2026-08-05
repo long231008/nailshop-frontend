@@ -47,9 +47,33 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
   const [giftMessage, setGiftMessage] = useState(null)
   const [bookError, setBookError] = useState(null)
   const [busy, setBusy] = useState(false)
+  // Length options per service (a longer set), and the one chosen per cart row.
+  const [lengthsByService, setLengthsByService] = useState({})
+  const [chosenLength, setChosenLength] = useState({})
+
+  useEffect(() => {
+    api
+      .getBranch(branchId)
+      .then((branch) => {
+        const map = {}
+        for (const service of branch.services || []) {
+          if (service.lengths?.length) map[service.id] = service.lengths
+        }
+        setLengthsByService(map)
+      })
+      .catch(() => setLengthsByService({}))
+  }, [branchId])
+
+  const lengthOf = (cartIndex) => chosenLength[cartIndex] || ''
+  const lengthById = (serviceId, id) =>
+    (lengthsByService[serviceId] || []).find((l) => l.id === id) || null
 
   const branchName = branchItems[0].branchName
-  const totalPrice = branchItems.reduce((sum, item) => sum + item.price, 0)
+  const totalPrice = branchItems.reduce(
+    (sum, item) =>
+      sum + item.price + (lengthById(item.serviceId, lengthOf(item.cartIndex))?.extra_price || 0),
+    0
+  )
   const totalDuration = branchItems.reduce((sum, item) => sum + item.durationMin, 0)
   // Menu minutes are only what customers read: the salon holds every leg for the
   // slowest capable technician's real minutes, so the same treatments can book
@@ -69,6 +93,8 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
   }, [branchId, totalPrice])
 
   const serviceIds = branchItems.map((item) => item.serviceId).join(',')
+  // One entry per service, in the same order; empty means the standard length.
+  const extensionIds = branchItems.map((item) => lengthOf(item.cartIndex)).join(',')
 
   useEffect(() => {
     if (!date) return
@@ -82,6 +108,8 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
         branch_id: branchId,
         service_ids: serviceIds,
         date,
+        // A longer set holds more of the day, so the times offered must know.
+        ...(extensionIds.replace(/,/g, '') ? { extension_ids: extensionIds } : {}),
       })
       .then((data) => {
         setBookingWindow(data.window)
@@ -98,7 +126,7 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
       .listBranchTechnicians(branchId, date)
       .then(setTechnicians)
       .catch(() => setTechnicians([]))
-  }, [branchId, date, serviceIds])
+  }, [branchId, date, serviceIds, extensionIds])
 
   // Free slots plus locked quarter-hours, merged into one chronological strip so
   // locked times show crossed out instead of silently vanishing.
@@ -133,6 +161,7 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
       // along as a note (staff_id) - the salon grants it by hand if it fits.
       const items = branchItems.map((item) => ({
         service_id: item.serviceId,
+        service_extension_id: lengthOf(item.cartIndex) || null,
         start_time: selectedSlot.start_time,
         custom_design_id: item.designId || null,
         staff_id: wishedStaffId || null,
@@ -160,27 +189,56 @@ function BranchCartSection({ branchId, branchItems, branchAddress, onBooked }) {
       </div>
 
       <div className="service-list">
-        {branchItems.map((item) => (
-          <div key={item.cartIndex} className="cart-row">
-            <div className="service-row-info">
-              <strong>{item.name}</strong>
-              <p className="muted">
-                {item.durationMin} min · {branchName}
-                {branchAddress ? ` — ${branchAddress}` : ''}
-              </p>
+        {branchItems.map((item) => {
+          const options = lengthsByService[item.serviceId] || []
+          const picked = lengthById(item.serviceId, lengthOf(item.cartIndex))
+          return (
+            <div key={item.cartIndex} className="cart-row">
+              <div className="service-row-info">
+                <strong>{item.name}</strong>
+                <p className="muted">
+                  {item.durationMin + (picked?.extra_duration_min || 0)} min · {branchName}
+                  {branchAddress ? ` — ${branchAddress}` : ''}
+                </p>
+                {options.length > 0 && (
+                  <label className="cart-length">
+                    Length
+                    <select
+                      className="input"
+                      value={lengthOf(item.cartIndex)}
+                      onChange={(e) =>
+                        setChosenLength((prev) => ({
+                          ...prev,
+                          [item.cartIndex]: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Standard</option>
+                      {options.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name} (+{option.extra_duration_min} min, +£
+                          {option.extra_price.toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              <div className="service-row-action">
+                <span className="service-price">
+                  £{(item.price + (picked?.extra_price || 0)).toFixed(2)}
+                </span>
+                <button
+                  className="btn btn-danger-outline"
+                  onClick={() => removeItem(item.cartIndex)}
+                  aria-label={`Remove ${item.name}`}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
-            <div className="service-row-action">
-              <span className="service-price">£{item.price}</span>
-              <button
-                className="btn btn-danger-outline"
-                onClick={() => removeItem(item.cartIndex)}
-                aria-label={`Remove ${item.name}`}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="cart-total">

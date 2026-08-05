@@ -1089,6 +1089,19 @@ textarea.input {
   padding: 0.45rem 0;
 }
 
+.cart-length {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.cart-length .input {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+}
+
 .occupancy-detail-actions {
   display: flex;
   gap: 0.5rem;

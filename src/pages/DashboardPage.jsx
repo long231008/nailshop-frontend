@@ -7,6 +7,7 @@ import BranchResources from '../components/BranchResources'
 import CapabilityMatrix from '../components/CapabilityMatrix'
 import DesignQuotes from '../components/DesignQuotes'
 import LeaveManager from '../components/LeaveManager'
+import ServiceLengths from '../components/ServiceLengths'
 import SlotLockManager from '../components/SlotLockManager'
 import UserManager from '../components/UserManager'
 
@@ -109,6 +110,8 @@ export default function DashboardPage() {
       <AllocationPanel branchId={branchId} token={auth.token} />
 
       <CapabilityMatrix token={auth.token} />
+
+      <ServiceLengths token={auth.token} />
 
       {branchId && <SlotLockManager branchId={branchId} token={auth.token} showPermissions />}
 

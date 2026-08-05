@@ -166,6 +166,12 @@ export const api = {
   // Branch physical capacity (pedicure chairs / tables / massage beds).
   updateBranch: (branchId, payload, token) =>
     request(`/app/branches/${branchId}`, { method: 'PATCH', body: payload, token }),
+  // Length options on a service (e.g. a longer set costs more time and money).
+  listServiceLengths: (serviceId) => request(`/app/services/${serviceId}/lengths`),
+  createServiceLength: (serviceId, payload, token) =>
+    request(`/app/services/${serviceId}/lengths`, { method: 'POST', body: payload, token }),
+  deleteServiceLength: (lengthId, token) =>
+    request(`/app/services/lengths/${lengthId}`, { method: 'DELETE', token }),
   // Staff leave: a technician off for a time range, chain-wide.
   listLeaves: (params, token) =>
     request(`/app/leaves?${new URLSearchParams(params).toString()}`, { token }),
