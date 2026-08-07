@@ -53,6 +53,7 @@ function newService() {
 export default function CapabilityMatrix({ token }) {
   const [services, setServices] = useState(null)
   const [staff, setStaff] = useState([])
+  const [branches, setBranches] = useState([])
   // capability[staffId][serviceKey] = minutes ('' = cannot do)
   const [capability, setCapability] = useState({})
   const [error, setError] = useState(null)
@@ -68,6 +69,7 @@ export default function CapabilityMatrix({ token }) {
         setCapability(data.capability)
       })
       .catch((err) => setError(err.message))
+    api.listBranches().then(setBranches).catch(() => {})
   }, [token])
 
   const updateService = (key, field, value) => {
@@ -91,6 +93,18 @@ export default function CapabilityMatrix({ token }) {
               work_start_hour: fullTime ? null : 9,
               work_end_hour: fullTime ? null : 13,
             }
+          : t
+      )
+    )
+  }
+
+  // One dropdown covers both fields: picking a salon pins the technician
+  // there every day; "Floating" hands them back to the nightly plan.
+  const setHomeSalon = (staffId, branchId) => {
+    setStaff((prev) =>
+      prev.map((t) =>
+        t.id === staffId
+          ? { ...t, branch_id: branchId || null, floating: branchId === '' }
           : t
       )
     )
@@ -155,6 +169,8 @@ export default function CapabilityMatrix({ token }) {
           })),
         staff: staff.map((t) => ({
           id: t.id,
+          branch_id: t.branch_id,
+          floating: t.floating,
           days_off: t.days_off,
           // Null on both is what marks a full-timer, so an empty box must stay
           // null rather than becoming 0 - that would mean "in from midnight".
@@ -387,13 +403,19 @@ export default function CapabilityMatrix({ token }) {
       </div>
 
       <div className="card matrix-card">
-        <h3>2. Technicians — weekly days off &amp; hours cap</h3>
+        <h3>2. Technicians — home salon, weekly days off &amp; hours cap</h3>
+        <p className="muted">
+          <strong>Home salon</strong> pins the technician to that salon every day.{' '}
+          <strong>Floating</strong> lets the nightly plan send them wherever the chain needs
+          them most.
+        </p>
         <div className="matrix-scroll">
           <table className="matrix-table">
             <thead>
               <tr>
                 <th>Technician</th>
                 <th>Status</th>
+                <th>Home salon</th>
                 <th>Days off (weekly)</th>
                 <th>Hours</th>
                 <th>Max hours/week</th>
@@ -404,6 +426,20 @@ export default function CapabilityMatrix({ token }) {
                 <tr key={t.id}>
                   <td><strong>{t.display_name}</strong></td>
                   <td className="muted">{t.status}</td>
+                  <td>
+                    <select
+                      className="input matrix-input"
+                      value={t.floating ? '' : t.branch_id || ''}
+                      onChange={(e) => setHomeSalon(t.id, e.target.value)}
+                    >
+                      <option value="">Floating (any salon)</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td>
                     <div className="dayoff-row">
                       {DAY_LABELS.map((label, day) => {
