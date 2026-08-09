@@ -180,7 +180,11 @@ export default function CapabilityMatrix({ token }) {
           work_end_hour: t.work_end_hour == null || t.work_end_hour === ''
             ? null
             : Number(t.work_end_hour),
-          max_hours_week: Number(t.max_hours_week) || 40,
+          // 0 is a real choice ("no hours this week"); only an empty box
+          // falls back to the default 40.
+          max_hours_week: t.max_hours_week === '' || t.max_hours_week == null
+            ? 40
+            : Number(t.max_hours_week),
         })),
         capability: Object.fromEntries(
           Object.entries(capability).map(([staffId, cells]) => [
