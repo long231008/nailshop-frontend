@@ -450,6 +450,8 @@ export default function CartPage() {
         count: booking.details.length,
         total: booking.total_price,
         giftMessage: booking.gift_message,
+        depositAmount: booking.deposit_amount,
+        depositLink: booking.deposit_link,
       },
     ])
     removeBranchItems(branchId)
@@ -470,9 +472,18 @@ export default function CartPage() {
         <div key={i} className="card booking-confirmation">
           <p>
             ✅ Booking of <strong>{c.count}</strong> {c.count === 1 ? 'treatment' : 'treatments'}{' '}
-            (£{c.total}) at <strong>{c.branchName}</strong> submitted. The salon will confirm it
-            and send you a deposit link.
+            (£{c.total}) at <strong>{c.branchName}</strong> confirmed.
           </p>
+          {c.depositLink && (
+            <p>
+              Please pay your <strong>£{c.depositAmount?.toFixed(2)}</strong> deposit within{' '}
+              <strong>15 minutes</strong> to keep the time —{' '}
+              <a href={c.depositLink} target="_blank" rel="noreferrer">
+                pay the deposit
+              </a>
+              . The link was also sent to you.
+            </p>
+          )}
           {c.giftMessage && <p className="gift-banner">🎁 {c.giftMessage}</p>}
         </div>
       ))}
