@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import Logo from './Logo'
 
 export default function Header() {
   const { auth, logout } = useAuth()
@@ -42,7 +43,10 @@ export default function Header() {
   return (
     <header className="header">
       <Link to="/" className="header-brand">
-        Nailzinc <em>Limited</em>
+        <Logo />
+        <span>
+          Nailzinc <em>Limited</em>
+        </span>
       </Link>
       <nav className="header-nav">
         <Link to="/cart" className="cart-link">
