@@ -32,23 +32,32 @@ function cellState(value, menuMinutes) {
   return 'ok'
 }
 
-function newService() {
+function newService(zone = 'HANDS') {
   return {
     id: null,
     branch_id: null,
     name: '',
-    category: 'gel',
+    category: zone === 'OTHER' ? 'hydro_head_massage' : 'gel',
     description: null,
     duration_min: 30,
     base_price: 0,
-    skill_group: 'GEL',
-    body_zone: 'HANDS',
+    skill_group: zone === 'FEET' ? 'PEDI' : zone === 'OTHER' ? 'KHAC' : 'GEL',
+    body_zone: zone,
     resource: null,
     turn_weight: 1,
     buffer_after_min: 5,
     _key: `new-${Math.random().toString(36).slice(2)}`,
   }
 }
+
+// The price list reads best in the order people work down a body: hands,
+// feet, then everything else (head spa, wax). Rows regroup live as their
+// body zone changes.
+const ZONE_SECTIONS = [
+  { zone: 'HANDS', label: 'Hands — manicure, gel, BIAB' },
+  { zone: 'FEET', label: 'Feet — pedicure' },
+  { zone: 'OTHER', label: 'Head spa & other' },
+]
 
 export default function CapabilityMatrix({ token }) {
   const [services, setServices] = useState(null)
@@ -288,8 +297,23 @@ export default function CapabilityMatrix({ token }) {
                 <th>Turn weight</th>
               </tr>
             </thead>
-            <tbody>
-              {services.map((service) => (
+            {ZONE_SECTIONS.map(({ zone, label }) => {
+              const rows = services.filter((s) =>
+                zone === 'OTHER'
+                  ? s.body_zone !== 'HANDS' && s.body_zone !== 'FEET'
+                  : s.body_zone === zone
+              )
+              return (
+              <tbody key={zone}>
+              <tr className="matrix-zone-row">
+                <td colSpan={9}>{label}</td>
+              </tr>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="muted">No services in this section yet.</td>
+                </tr>
+              )}
+              {rows.map((service) => (
                 <tr key={service._key}>
                   <td>
                     <input
@@ -394,16 +418,34 @@ export default function CapabilityMatrix({ token }) {
                   </td>
                 </tr>
               ))}
-            </tbody>
+              </tbody>
+              )
+            })}
           </table>
         </div>
-        <button
-          type="button"
-          className="btn btn-outline"
-          onClick={() => setServices((prev) => [...prev, newService()])}
-        >
-          + Add service
-        </button>
+        <div className="matrix-actions">
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setServices((prev) => [...prev, newService('HANDS')])}
+          >
+            + Hands service
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setServices((prev) => [...prev, newService('FEET')])}
+          >
+            + Feet service
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setServices((prev) => [...prev, newService('OTHER')])}
+          >
+            + Head spa / other
+          </button>
+        </div>
       </div>
 
       <div className="card matrix-card">

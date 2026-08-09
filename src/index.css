@@ -1523,6 +1523,16 @@ textarea.input {
   white-space: nowrap;
 }
 
+.matrix-zone-row td {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border-top: 2px solid var(--gold);
+  padding: 0.45rem 0.5rem;
+}
+
 .matrix-table td {
   padding: 0.2rem 0.3rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
