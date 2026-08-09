@@ -253,11 +253,24 @@ export default function UserManager({ branches, token }) {
                   )}
                   {userBookings?.length > 0 &&
                     userBookings.map((b) => (
-                      <div key={b.id} className="user-booking-item">
+                      <div
+                        key={b.id}
+                        className={
+                          'user-booking-item ' +
+                          // Red: money went through the system (deposit or card) -
+                          // the keep-forever kind. Green: cash only / no money taken.
+                          (b.paid_through_system ? 'money-bound' : 'money-free')
+                        }
+                      >
                         <div className="service-row-info">
                           <strong>
                             {b.booking_date} · {branchName(b.branch_id)}
                           </strong>
+                          <p className="muted money-tag">
+                            {b.paid_through_system
+                              ? '● Paid via system — keep'
+                              : '● Cash / no payment taken'}
+                          </p>
                           {b.details.map((d, i) => (
                             <p key={i} className="muted">
                               {d.service_name} ·{' '}

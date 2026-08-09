@@ -911,6 +911,28 @@ select {
   border-bottom: none;
 }
 
+/* Money trail colours: red = deposit/card money moved through the system
+   (keep those records); green = cash only or no payment taken. */
+.user-booking-item.money-bound {
+  border-left: 3px solid var(--danger);
+  padding-left: 0.6rem;
+}
+
+.user-booking-item.money-free {
+  border-left: 3px solid var(--success);
+  padding-left: 0.6rem;
+}
+
+.money-bound .money-tag {
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
+.money-free .money-tag {
+  color: var(--success);
+  font-size: 0.78rem;
+}
+
 .lock-time-row {
   display: flex;
   gap: 0.75rem;
