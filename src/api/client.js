@@ -172,6 +172,8 @@ export const api = {
     request(`/app/services/${serviceId}/lengths`, { method: 'POST', body: payload, token }),
   deleteServiceLength: (lengthId, token) =>
     request(`/app/services/lengths/${lengthId}`, { method: 'DELETE', token }),
+  deleteService: (serviceId, token) =>
+    request(`/app/services/${serviceId}`, { method: 'DELETE', token }),
   // Staff leave: a technician off for a time range, chain-wide.
   listLeaves: (params, token) =>
     request(`/app/leaves?${new URLSearchParams(params).toString()}`, { token }),

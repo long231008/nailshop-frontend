@@ -114,6 +114,23 @@ export default function CapabilityMatrix({ token }) {
     )
   }
 
+  // A row not yet saved just leaves the screen; a stored one is deleted for
+  // real (the backend refuses once bookings reference it).
+  const removeService = async (service) => {
+    if (service.id === null) {
+      setServices((prev) => prev.filter((s) => s._key !== service._key))
+      return
+    }
+    if (!window.confirm(`Delete "${service.name}" from the menu?`)) return
+    setError(null)
+    try {
+      await api.deleteService(service.id, token)
+      setServices((prev) => prev.filter((s) => s._key !== service._key))
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   // One-click cleanup for rows entered before the sections existed. Rows with
   // no recognisable signal keep their current zone; nothing is stored until
   // the usual Save.
@@ -334,6 +351,7 @@ export default function CapabilityMatrix({ token }) {
             <thead>
               <tr>
                 <th>Service name</th>
+                <th>Salon</th>
                 <th>Category</th>
                 <th>Skill group</th>
                 <th>Price (£)</th>
@@ -342,6 +360,7 @@ export default function CapabilityMatrix({ token }) {
                 <th>Chair/room</th>
                 <th>Clean-up (min)</th>
                 <th>Turn weight</th>
+                <th></th>
               </tr>
             </thead>
             {ZONE_SECTIONS.map(({ zone, label }) => {
@@ -353,11 +372,11 @@ export default function CapabilityMatrix({ token }) {
               return (
               <tbody key={zone}>
               <tr className="matrix-zone-row">
-                <td colSpan={9}>{label}</td>
+                <td colSpan={11}>{label}</td>
               </tr>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="muted">No services in this section yet.</td>
+                  <td colSpan={11} className="muted">No services in this section yet.</td>
                 </tr>
               )}
               {rows.map((service) => (
@@ -369,6 +388,24 @@ export default function CapabilityMatrix({ token }) {
                       placeholder="e.g. Gel full set"
                       onChange={(e) => updateService(service._key, 'name', e.target.value)}
                     />
+                  </td>
+                  <td>
+                    {/* Identical names in two sections are usually per-salon
+                        copies - this column is what tells them apart. */}
+                    <select
+                      className="input matrix-input"
+                      value={service.branch_id || ''}
+                      onChange={(e) =>
+                        updateService(service._key, 'branch_id', e.target.value || null)
+                      }
+                    >
+                      <option value="">Whole chain</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td>
                     <select
@@ -462,6 +499,16 @@ export default function CapabilityMatrix({ token }) {
                       value={service.turn_weight}
                       onChange={(e) => updateService(service._key, 'turn_weight', e.target.value)}
                     />
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn btn-danger-outline matrix-remove"
+                      title="Delete this service"
+                      onClick={() => removeService(service)}
+                    >
+                      ✕
+                    </button>
                   </td>
                 </tr>
               ))}
