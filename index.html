@@ -2,6 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Apply the visitor's saved theme before first paint so the page never
+      // flashes the wrong colours.
+      try {
+        var savedTheme = localStorage.getItem('theme')
+        if (savedTheme) document.documentElement.dataset.theme = savedTheme
+      } catch (e) {
+        /* storage unavailable - fall back to the OS preference */
+      }
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#1e3a2a" />

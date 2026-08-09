@@ -11,6 +11,24 @@ export default function Header() {
   const location = useLocation()
   const [requestCount, setRequestCount] = useState(0)
   const [quotedCount, setQuotedCount] = useState(0)
+  // Explicit choice (persisted on <html> by index.html before first paint),
+  // otherwise whatever the OS asked for.
+  const [theme, setTheme] = useState(
+    () =>
+      document.documentElement.dataset.theme ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  )
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    document.documentElement.dataset.theme = next
+    try {
+      localStorage.setItem('theme', next)
+    } catch {
+      // Private browsing may refuse storage; the page still switches.
+    }
+    setTheme(next)
+  }
 
   const isStaff = auth && (auth.role === 'admin' || auth.role === 'staff')
   const isCustomer = auth && auth.role === 'customer'
@@ -49,6 +67,15 @@ export default function Header() {
         </span>
       </Link>
       <nav className="header-nav">
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀' : '☾'}
+        </button>
         <Link to="/cart" className="cart-link">
           Cart
           {totals.count > 0 && <span className="cart-count">{totals.count}</span>}

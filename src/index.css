@@ -30,8 +30,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark palette. Applies when the OS asks for dark (unless the visitor chose
+   light with the header toggle), or when they chose dark explicitly. The
+   toggle stores its choice as data-theme on <html>. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --green: #7fae90;
     --green-soft: #5c8a6e;
     --green-dark: #cfe3d6;
@@ -48,6 +51,24 @@
     --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --green: #7fae90;
+  --green-soft: #5c8a6e;
+  --green-dark: #cfe3d6;
+  --gold: #d9b878;
+  --gold-soft: #6b5836;
+  --gold-dark: #e6cfa3;
+  --cream: #131511;
+  --cream-deep: #1b1e19;
+  --card-bg: #1e211c;
+  --text: #ebe7dc;
+  --text-muted: #a5a294;
+  --border: #35392f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 * {
@@ -166,6 +187,27 @@ select {
   font-size: 0.85rem;
 }
 
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1.5px solid color-mix(in srgb, var(--green) 45%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--green);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  transform: translateY(-1px);
+}
+
 .cart-link {
   position: relative;
   display: inline-flex;
@@ -254,9 +296,13 @@ select {
 }
 
 @media (prefers-color-scheme: dark) {
-  .btn {
+  :root:not([data-theme='light']) .btn {
     color: var(--green-dark);
   }
+}
+
+:root[data-theme='dark'] .btn {
+  color: var(--green-dark);
 }
 
 .btn:hover {
@@ -590,9 +636,13 @@ select {
 }
 
 @media (prefers-color-scheme: dark) {
-  .slot-btn-active {
+  :root:not([data-theme='light']) .slot-btn-active {
     color: var(--green-dark);
   }
+}
+
+:root[data-theme='dark'] .slot-btn-active {
+  color: var(--green-dark);
 }
 
 .back-link {
@@ -634,9 +684,13 @@ select {
 }
 
 @media (prefers-color-scheme: dark) {
-  .cart-bar {
+  :root:not([data-theme='light']) .cart-bar {
     color: var(--green-dark);
   }
+}
+
+:root[data-theme='dark'] .cart-bar {
+  color: var(--green-dark);
 }
 
 .cart-bar-cta {
@@ -1177,9 +1231,13 @@ textarea.input {
 }
 
 @media (prefers-color-scheme: dark) {
-  .lockgrid-slot-selected {
+  :root:not([data-theme='light']) .lockgrid-slot-selected {
     color: var(--green-dark);
   }
+}
+
+:root[data-theme='dark'] .lockgrid-slot-selected {
+  color: var(--green-dark);
 }
 
 .lockgrid-slot-locked {
@@ -1213,9 +1271,13 @@ textarea.input {
 }
 
 @media (prefers-color-scheme: dark) {
-  .method-active {
+  :root:not([data-theme='light']) .method-active {
     color: var(--green-dark);
   }
+}
+
+:root[data-theme='dark'] .method-active {
+  color: var(--green-dark);
 }
 
 /* ---------- daily schedule ---------- */
