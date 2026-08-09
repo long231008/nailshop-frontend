@@ -106,12 +106,12 @@ export default function ServiceLengths({ token }) {
             </select>
           </label>
           <label>
-            Name
+            Length name (what customers see)
             <input
               className="input"
               type="text"
               maxLength={100}
-              placeholder="Long"
+              placeholder="e.g. Long, XL"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
