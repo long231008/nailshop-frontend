@@ -680,7 +680,16 @@ export default function CapabilityMatrix({ token }) {
                 .filter((s) => s.id !== null)
                 .map((service) => (
                   <tr key={service._key}>
-                    <td><strong>{service.name}</strong></td>
+                    <td>
+                      <strong>{service.name}</strong>
+                      {/* Same name twice = per-salon copies; say which is which. */}
+                      {service.branch_id && (
+                        <span className="muted">
+                          {' '}
+                          · {branches.find((b) => b.id === service.branch_id)?.name || 'one salon'}
+                        </span>
+                      )}
+                    </td>
                     <td className="muted">{service.duration_min}&apos;</td>
                     {staff.map((t) => {
                       const value = capability[t.id]?.[service._key] ?? ''
