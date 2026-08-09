@@ -4,6 +4,7 @@ import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import AllocationPanel from '../components/AllocationPanel'
 import BranchResources from '../components/BranchResources'
+import AuditLog from '../components/AuditLog'
 import CapabilityMatrix from '../components/CapabilityMatrix'
 import DesignQuotes from '../components/DesignQuotes'
 import LeaveManager from '../components/LeaveManager'
@@ -128,6 +129,8 @@ export default function DashboardPage() {
       <DesignQuotes token={auth.token} />
 
       <UserManager branches={branches} token={auth.token} />
+
+      <AuditLog token={auth.token} />
 
       {summary && (
         <>

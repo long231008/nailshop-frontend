@@ -78,6 +78,8 @@ export const api = {
     request(`/app/admin/users/${userId}/revoke-staff`, { method: 'POST', token }),
   deleteUser: (userId, token) =>
     request(`/app/admin/users/${userId}`, { method: 'DELETE', token }),
+  auditLog: (params, token) =>
+    request(`/app/audit-log?${new URLSearchParams(params).toString()}`, { token }),
   updateUserPhone: (userId, phone, token) =>
     request(`/app/admin/users/${userId}/phone`, {
       method: 'PATCH',
