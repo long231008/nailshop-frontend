@@ -60,6 +60,28 @@ export default function UserManager({ branches, token }) {
     }
   }
 
+  // The number is the login: fixing an account registered under a wrong
+  // number (e.g. a technician set up with a Vietnamese-style 09...) is done
+  // here rather than by deleting and re-creating them.
+  const submitPhoneChange = async (user) => {
+    const current = user.phone_number || ''
+    const next = window.prompt(
+      `New phone number for ${user.phone_number || user.email || 'this account'}:`,
+      current
+    )
+    if (next === null || next.trim() === '' || next.trim() === current) return
+    setError(null)
+    setBusy(true)
+    try {
+      await api.updateUserPhone(user.id, next.trim(), token)
+      reload()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const submitRevoke = async (userId) => {
     setError(null)
     setBusy(true)
@@ -190,6 +212,13 @@ export default function UserManager({ branches, token }) {
               <div className="service-row-action">
                 <button className="btn btn-outline" onClick={() => toggleBookings(user.id)}>
                   {bookingsUserId === user.id ? 'Hide bookings' : `Bookings (${user.booking_count})`}
+                </button>
+                <button
+                  className="btn btn-outline"
+                  disabled={busy}
+                  onClick={() => submitPhoneChange(user)}
+                >
+                  Edit phone
                 </button>
                 {user.role === 'customer' && (
                   <button className="btn btn-outline" onClick={() => startGrant(user)}>

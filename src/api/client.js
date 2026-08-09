@@ -78,6 +78,12 @@ export const api = {
     request(`/app/admin/users/${userId}/revoke-staff`, { method: 'POST', token }),
   deleteUser: (userId, token) =>
     request(`/app/admin/users/${userId}`, { method: 'DELETE', token }),
+  updateUserPhone: (userId, phone, token) =>
+    request(`/app/admin/users/${userId}/phone`, {
+      method: 'PATCH',
+      body: { phone_number: phone },
+      token,
+    }),
   adminUserBookings: (userId, token) =>
     request(`/app/admin/users/${userId}/bookings`, { token }),
   dailySchedule: (params, token) =>
