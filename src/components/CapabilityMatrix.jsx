@@ -59,6 +59,20 @@ const ZONE_SECTIONS = [
   { zone: 'OTHER', label: 'Head spa & other' },
 ]
 
+// Where does a service belong? Hard facts first (a pedicure chair or PEDI
+// skill can only mean feet), then words in the name - English or Vietnamese.
+function guessZone(service) {
+  if (service.resource === 'PEDI_CHAIR') return 'FEET'
+  if (service.skill_group === 'PEDI') return 'FEET'
+  if (service.category === 'hydro_head_massage') return 'OTHER'
+  if (service.skill_group === 'WAX') return 'OTHER'
+  const name = (service.name || '').toLowerCase()
+  if (/pedi|foot|feet|toe|chân|chan/.test(name)) return 'FEET'
+  if (/head|đầu|spa|massage|wax|brow|lash/.test(name)) return 'OTHER'
+  if (/mani|hand|tay|gel|biab|acrylic|nail|bột|bot|polish/.test(name)) return 'HANDS'
+  return service.body_zone || 'HANDS'
+}
+
 export default function CapabilityMatrix({ token }) {
   const [services, setServices] = useState(null)
   const [staff, setStaff] = useState([])
@@ -83,7 +97,33 @@ export default function CapabilityMatrix({ token }) {
 
   const updateService = (key, field, value) => {
     setServices((prev) =>
-      prev.map((service) => (service._key === key ? { ...service, [field]: value } : service))
+      prev.map((service) => {
+        if (service._key !== key) return service
+        const next = { ...service, [field]: value }
+        if (field === 'body_zone') {
+          // A hand-picked zone wins over every later guess.
+          next._zoneManual = true
+        } else if (
+          !next._zoneManual &&
+          ['name', 'skill_group', 'category', 'resource'].includes(field)
+        ) {
+          next.body_zone = guessZone(next)
+        }
+        return next
+      })
+    )
+  }
+
+  // One-click cleanup for rows entered before the sections existed. Rows with
+  // no recognisable signal keep their current zone; nothing is stored until
+  // the usual Save.
+  const autoSortZones = () => {
+    setServices((prev) =>
+      prev.map((service) => ({
+        ...service,
+        body_zone: guessZone(service),
+        _zoneManual: false,
+      }))
     )
   }
 
@@ -280,8 +320,15 @@ export default function CapabilityMatrix({ token }) {
         <p className="muted">
           <strong>Skill group</strong> decides where technicians are sent when the chain has more
           than one salon; it no longer limits how much can be sold. <strong>Chair/room</strong>{' '}
-          ties a service to a physical spot counted under Branch capacity.
+          ties a service to a physical spot counted under Branch capacity. Sections follow each
+          row&apos;s body zone — typing a name fills it in automatically, and{' '}
+          <strong>Auto-sort</strong> re-files every row at once (then Save as usual).
         </p>
+        <div className="matrix-actions">
+          <button type="button" className="btn btn-outline" onClick={autoSortZones}>
+            ✨ Auto-sort hands / feet / head
+          </button>
+        </div>
         <div className="matrix-scroll">
           <table className="matrix-table">
             <thead>
