@@ -38,6 +38,8 @@ export default function AuditLog({ token }) {
   const [error, setError] = useState(null)
   const [exhausted, setExhausted] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [pruneDays, setPruneDays] = useState(730)
+  const [pruneResult, setPruneResult] = useState(null)
 
   const load = useCallback(
     (offset) => {
@@ -59,6 +61,29 @@ export default function AuditLog({ token }) {
       })
       .catch((err) => setError(err.message))
   }, [load])
+
+  const prune = async () => {
+    const days = Math.max(30, Number(pruneDays) || 730)
+    if (
+      !window.confirm(
+        `Delete audit entries older than ${days} days? Money records (payments, cancellations with deposits) are always kept.`
+      )
+    )
+      return
+    setError(null)
+    setBusy(true)
+    try {
+      const result = await api.pruneAuditLog(days, token)
+      setPruneResult(result.deleted)
+      const rows = await load(0)
+      setEntries(rows)
+      setExhausted(rows.length < PAGE)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const loadMore = async () => {
     setBusy(true)
@@ -130,6 +155,33 @@ export default function AuditLog({ token }) {
             </button>
           </div>
         )}
+
+        <div className="matrix-actions" style={{ alignItems: 'center', gap: '0.6rem' }}>
+          <label className="muted" style={{ fontSize: '0.85rem' }}>
+            Delete entries older than{' '}
+            <input
+              className="input matrix-input matrix-num"
+              type="number"
+              min="30"
+              max="3650"
+              value={pruneDays}
+              onChange={(e) => setPruneDays(e.target.value)}
+              style={{ width: '5.5rem', display: 'inline-block' }}
+            />{' '}
+            days
+          </label>
+          <button type="button" className="btn btn-danger-outline" disabled={busy} onClick={prune}>
+            Delete old entries
+          </button>
+          {pruneResult !== null && (
+            <span className="muted">Deleted {pruneResult} entr{pruneResult === 1 ? 'y' : 'ies'}.</span>
+          )}
+        </div>
+        <p className="muted" style={{ fontSize: '0.8rem' }}>
+          A nightly job also removes entries past the retention window automatically. Money
+          records — payments and cancellations carrying deposit facts — are never deleted, by
+          either path, and every clean-up writes its own audit entry.
+        </p>
       </div>
     </section>
   )

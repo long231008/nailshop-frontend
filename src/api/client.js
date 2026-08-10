@@ -80,6 +80,8 @@ export const api = {
     request(`/app/admin/users/${userId}`, { method: 'DELETE', token }),
   auditLog: (params, token) =>
     request(`/app/audit-log?${new URLSearchParams(params).toString()}`, { token }),
+  pruneAuditLog: (olderThanDays, token) =>
+    request(`/app/audit-log?older_than_days=${olderThanDays}`, { method: 'DELETE', token }),
   updateUserPhone: (userId, phone, token) =>
     request(`/app/admin/users/${userId}/phone`, {
       method: 'PATCH',
