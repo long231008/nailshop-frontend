@@ -179,8 +179,8 @@ export default function AuditLog({ token }) {
         </div>
         <p className="muted" style={{ fontSize: '0.8rem' }}>
           A nightly job also removes entries past the retention window automatically. Money
-          records — payments and cancellations carrying deposit facts — are never deleted, by
-          either path, and every clean-up writes its own audit entry.
+          records — payments and cancellations carrying deposit facts — are never deleted by
+          either path. Deleted entries are gone for good.
         </p>
       </div>
     </section>
