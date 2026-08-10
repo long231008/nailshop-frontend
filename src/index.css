@@ -809,6 +809,57 @@ select {
   background: linear-gradient(to right, var(--gold), transparent);
 }
 
+/* ---------- collapsible dashboard panels ---------- */
+
+.collapse-section {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+}
+
+.collapse-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1.15rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--green);
+  text-align: left;
+  transition: color 0.15s ease;
+}
+
+.collapse-head:hover {
+  color: var(--gold-dark);
+}
+
+.collapse-chevron {
+  color: var(--gold-dark);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.collapse-body {
+  padding: 0 1.15rem 1.15rem;
+}
+
+/* The panel's own big heading would repeat the bar's title. */
+.collapse-body .dash-heading {
+  display: none;
+}
+
+.dash-heading-sub {
+  color: var(--green);
+  margin-top: 1.5rem;
+}
+
 .revenue-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));

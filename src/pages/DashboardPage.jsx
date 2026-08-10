@@ -6,6 +6,7 @@ import AllocationPanel from '../components/AllocationPanel'
 import BranchResources from '../components/BranchResources'
 import AuditLog from '../components/AuditLog'
 import CapabilityMatrix from '../components/CapabilityMatrix'
+import CollapsibleSection from '../components/CollapsibleSection'
 import DesignQuotes from '../components/DesignQuotes'
 import LeaveManager from '../components/LeaveManager'
 import ServiceLengths from '../components/ServiceLengths'
@@ -79,8 +80,7 @@ export default function DashboardPage() {
       {!summary && !error && <p className="muted">Loading...</p>}
 
       {revenue && (
-        <>
-          <h2 className="dash-heading">Bank revenue</h2>
+        <CollapsibleSection id="revenue" title="Bank revenue" defaultOpen>
           <div className="revenue-grid">
             <div className="card">
               <h3>Deposits collected</h3>
@@ -105,32 +105,53 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </>
+        </CollapsibleSection>
       )}
 
-      <AllocationPanel branchId={branchId} token={auth.token} />
+      <CollapsibleSection id="allocation" title="Nightly technician allocation (21:00 close)">
+        <AllocationPanel branchId={branchId} token={auth.token} />
+      </CollapsibleSection>
 
-      <CapabilityMatrix token={auth.token} />
+      <CollapsibleSection id="capability" title="Price list & technician capability">
+        <CapabilityMatrix token={auth.token} />
+      </CollapsibleSection>
 
-      <ServiceLengths token={auth.token} />
+      <CollapsibleSection id="lengths" title="Length options">
+        <ServiceLengths token={auth.token} />
+      </CollapsibleSection>
 
-      {branchId && <SlotLockManager branchId={branchId} token={auth.token} showPermissions />}
+      {branchId && (
+        <CollapsibleSection id="locks" title="Lock time slots">
+          <SlotLockManager branchId={branchId} token={auth.token} showPermissions />
+        </CollapsibleSection>
+      )}
 
       {branchId ? (
-        <BranchResources branchId={branchId} token={auth.token} />
+        <CollapsibleSection id="resources" title="Branch capacity">
+          <BranchResources branchId={branchId} token={auth.token} />
+        </CollapsibleSection>
       ) : (
         <p className="muted" style={{ textAlign: 'left', marginTop: '1.5rem' }}>
-          Pick a specific branch above to set its chairs, tables and beds.
+          Pick a specific branch above to set its chairs, tables and beds — and to lock time
+          slots.
         </p>
       )}
 
-      <LeaveManager branchId={branchId} token={auth.token} />
+      <CollapsibleSection id="leave" title="Staff leave">
+        <LeaveManager branchId={branchId} token={auth.token} />
+      </CollapsibleSection>
 
-      <DesignQuotes token={auth.token} />
+      <CollapsibleSection id="designs" title="Design quotes">
+        <DesignQuotes token={auth.token} />
+      </CollapsibleSection>
 
-      <UserManager branches={branches} token={auth.token} />
+      <CollapsibleSection id="users" title="User accounts">
+        <UserManager branches={branches} token={auth.token} />
+      </CollapsibleSection>
 
-      <AuditLog token={auth.token} />
+      <CollapsibleSection id="audit" title="Audit log">
+        <AuditLog token={auth.token} />
+      </CollapsibleSection>
 
       {summary && (
         <>

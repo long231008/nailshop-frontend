@@ -266,7 +266,7 @@ export default function SlotLockManager({ branchId, token, initialDate, showPerm
 
       {showPermissions && staff.length > 0 && (
         <>
-          <h2 className="dash-heading">Staff lock permission</h2>
+          <h3 className="dash-heading-sub">Staff lock permission</h3>
           <p className="muted">
             Staff with this permission can lock and unlock time slots at their own branch from
             their account.
