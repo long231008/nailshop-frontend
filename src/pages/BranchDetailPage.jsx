@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import DesignRequestModal from '../components/DesignRequestModal'
+import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 const FACEBOOK_PAGE_URL = import.meta.env.VITE_FACEBOOK_PAGE_URL
@@ -29,6 +30,8 @@ function groupByCategory(services) {
 export default function BranchDetailPage() {
   const { branchId } = useParams()
   const { totals, addItem } = useCart()
+  const { auth } = useAuth()
+  const navigate = useNavigate()
   const [branch, setBranch] = useState(null)
   const [error, setError] = useState(null)
   const [justAdded, setJustAdded] = useState(null)
@@ -65,6 +68,26 @@ export default function BranchDetailPage() {
       <h1>{branch.name}</h1>
       {branch.address && <p className="muted">{branch.address}</p>}
       {branch.phone_number && <p className="muted">{branch.phone_number}</p>}
+      {auth?.role === 'admin' && (
+        <button
+          type="button"
+          className="btn btn-danger-outline"
+          onClick={async () => {
+            if (!window.confirm(`Delete the salon "${branch.name}" for good?`)) return
+            setError(null)
+            try {
+              await api.deleteBranch(branchId, auth.token)
+              navigate('/')
+            } catch (err) {
+              // The server names what still points here (bookings, staff...).
+              setError(err.message)
+            }
+          }}
+        >
+          Delete this salon (admin)
+        </button>
+      )}
+      {error && <p className="error-text">{error}</p>}
 
       {totals.count > 0 && (
         <Link to="/cart" className="cart-bar">

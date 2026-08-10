@@ -48,6 +48,8 @@ async function request(path, { method = 'GET', body, token } = {}) {
 export const api = {
   listBranches: () => request('/app/branches'),
   getBranch: (branchId) => request(`/app/branches/${branchId}`),
+  deleteBranch: (branchId, token) =>
+    request(`/app/branches/${branchId}`, { method: 'DELETE', token }),
   listServices: (branchId) => request(`/app/services?branch_id=${branchId}`),
   requestOtp: (payload) => request('/app/auth/request-otp', { method: 'POST', body: payload }),
   verifyOtp: (payload) => request('/app/auth/verify', { method: 'POST', body: payload }),
