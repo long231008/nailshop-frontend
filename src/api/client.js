@@ -82,6 +82,8 @@ export const api = {
     request(`/app/audit-log?${new URLSearchParams(params).toString()}`, { token }),
   pruneAuditLog: (olderThanDays, token) =>
     request(`/app/audit-log?older_than_days=${olderThanDays}`, { method: 'DELETE', token }),
+  deleteAuditEntry: (entryId, token) =>
+    request(`/app/audit-log/${entryId}`, { method: 'DELETE', token }),
   updateUserPhone: (userId, phone, token) =>
     request(`/app/admin/users/${userId}/phone`, {
       method: 'PATCH',

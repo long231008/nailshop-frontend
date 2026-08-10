@@ -62,6 +62,18 @@ export default function AuditLog({ token }) {
       .catch((err) => setError(err.message))
   }, [load])
 
+  // One row, one click, gone for good. Money records come back with a clear
+  // refusal from the server.
+  const deleteEntry = async (entryId) => {
+    setError(null)
+    try {
+      await api.deleteAuditEntry(entryId, token)
+      setEntries((prev) => prev.filter((e) => e.id !== entryId))
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const prune = async () => {
     const days = Math.max(30, Number(pruneDays) || 730)
     if (
@@ -129,6 +141,7 @@ export default function AuditLog({ token }) {
                   <th>When</th>
                   <th>Action</th>
                   <th>Details</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -141,6 +154,16 @@ export default function AuditLog({ token }) {
                       <strong>{entry.action}</strong>
                     </td>
                     <td className="muted">{fmtDetails(entry.details)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-danger-outline matrix-remove"
+                        title="Delete this entry for good"
+                        onClick={() => deleteEntry(entry.id)}
+                      >
+                        ✕
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
