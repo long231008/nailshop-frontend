@@ -71,6 +71,68 @@
   color-scheme: dark;
 }
 
+/* ---------- seasonal accents ----------
+   data-season on <html> follows the UK's meteorological calendar (set by
+   src/season.js). Each season retints the accent family; the brand green
+   stays put so the site keeps its identity year-round. Summer is the house
+   gold itself. */
+
+:root[data-season='spring'] {
+  --gold: #cf8fa4;
+  --gold-soft: #f0d4dd;
+  --gold-dark: #a95f76;
+}
+
+:root[data-season='autumn'] {
+  --gold: #c67f42;
+  --gold-soft: #ecd0b4;
+  --gold-dark: #9a5c28;
+}
+
+:root[data-season='winter'] {
+  --gold: #7fa3c9;
+  --gold-soft: #d3e0ec;
+  --gold-dark: #54789e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-season='spring']:not([data-theme='light']) {
+    --gold: #dfa5b7;
+    --gold-soft: #64434e;
+    --gold-dark: #eecbd6;
+  }
+
+  :root[data-season='autumn']:not([data-theme='light']) {
+    --gold: #d99a63;
+    --gold-soft: #64472e;
+    --gold-dark: #ecc9a8;
+  }
+
+  :root[data-season='winter']:not([data-theme='light']) {
+    --gold: #9dbeda;
+    --gold-soft: #3c5063;
+    --gold-dark: #cfe0ee;
+  }
+}
+
+:root[data-theme='dark'][data-season='spring'] {
+  --gold: #dfa5b7;
+  --gold-soft: #64434e;
+  --gold-dark: #eecbd6;
+}
+
+:root[data-theme='dark'][data-season='autumn'] {
+  --gold: #d99a63;
+  --gold-soft: #64472e;
+  --gold-dark: #ecc9a8;
+}
+
+:root[data-theme='dark'][data-season='winter'] {
+  --gold: #9dbeda;
+  --gold-soft: #3c5063;
+  --gold-dark: #cfe0ee;
+}
+
 * {
   box-sizing: border-box;
 }

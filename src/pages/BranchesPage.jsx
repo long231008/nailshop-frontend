@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import { SEASON_LABELS, currentSeason } from '../season'
 
 const CATEGORY_SHORT_LABELS = {
   polish: 'Polish',
@@ -33,7 +34,9 @@ export default function BranchesPage() {
   return (
     <>
       <section className="hero">
-        <span className="hero-eyebrow">Nails · Care · Head Spa</span>
+        <span className="hero-eyebrow">
+          {SEASON_LABELS[currentSeason()]} · Nails · Care · Head Spa
+        </span>
         <h1>
           A little time, <em>beautifully</em> spent
         </h1>
