@@ -78,7 +78,7 @@ export default function AuditLog({ token }) {
     const days = Math.max(30, Number(pruneDays) || 730)
     if (
       !window.confirm(
-        `Delete ALL audit entries older than ${days} days, money records included?`
+        `Delete audit entries older than ${days} days? Money records (payments, cancellations with deposits) are kept - remove those one by one with ✕ if you really mean to.`
       )
     )
       return
@@ -201,10 +201,10 @@ export default function AuditLog({ token }) {
           )}
         </div>
         <p className="muted" style={{ fontSize: '0.8rem' }}>
-          These buttons delete anything, money records included — an admin&apos;s hand is
-          deliberate. The automatic nightly clean-up is the careful one: it removes entries past
-          the retention window but always keeps money records (payments, cancellations carrying
-          deposit facts). Deleted entries are gone for good.
+          The ✕ on a row deletes that one entry — any entry, money records included. The
+          delete-by-age button and the automatic nightly clean-up are bulk sweeps, so they
+          always keep money records (payments, cancellations carrying deposit facts). Deleted
+          entries are gone for good.
         </p>
       </div>
     </section>
