@@ -30,8 +30,34 @@ function shiftDate(dateStr, days) {
   return toIso(date)
 }
 
+// The schedule is the salon's book, so every time on it reads in the salon's
+// own timezone - whatever the computer looking at it is set to. Interpreting
+// times in browser-local used to shift the whole grid (and get every move
+// rejected) on a machine not set to UK time.
+const SHOP_TZ = 'Europe/London'
+
 function fmtTime(isoTime) {
-  return new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return new Date(isoTime).toLocaleTimeString('en-GB', {
+    timeZone: SHOP_TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
+function shopQuarterLabel(isoTime, stepMin) {
+  const [h, m] = fmtTime(isoTime).split(':').map(Number)
+  return `${String(h).padStart(2, '0')}:${String(Math.floor(m / stepMin) * stepMin).padStart(2, '0')}`
+}
+
+// "14:30 on 2026-08-11, salon time" as an ISO instant: try the UK's two
+// possible offsets and keep the one that round-trips to the typed wall clock.
+function shopTimeToIso(dateStr, hhmm) {
+  for (const offset of ['+01:00', '+00:00']) {
+    const candidate = new Date(`${dateStr}T${hhmm}:00${offset}`)
+    if (fmtTime(candidate.toISOString()) === hhmm) return candidate.toISOString()
+  }
+  return new Date(`${dateStr}T${hhmm}:00`).toISOString()
 }
 
 const STAFF_ROLES = new Set(['admin', 'staff'])
@@ -46,6 +72,9 @@ export default function SchedulePage() {
   const [error, setError] = useState(null)
   const [expanded, setExpanded] = useState(null)
   const [viewing, setViewing] = useState(null)
+  const [moving, setMoving] = useState(null)
+  const [moveTime, setMoveTime] = useState('')
+  const [moveError, setMoveError] = useState(null)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -74,27 +103,31 @@ export default function SchedulePage() {
     reload()
   }, [reload])
 
-  const handleMove = async (appointment) => {
-    const current = new Date(appointment.start_time)
-    const hhmm = `${String(current.getHours()).padStart(2, '0')}:${String(
-      current.getMinutes()
-    ).padStart(2, '0')}`
-    const input = window.prompt(`New start time (HH:MM) on ${date}`, hhmm)
-    if (!input) return
-    if (!/^\d{2}:\d{2}$/.test(input)) {
-      setError('Time must be in HH:MM format')
+  // An inline form instead of window.prompt: browsers silently disable
+  // prompts once "prevent additional dialogs" is ticked, which made the Move
+  // button look dead - and its error surfaced far away at the page top.
+  const startMove = (appointment) => {
+    setMoveError(null)
+    setMoveTime(fmtTime(appointment.start_time))
+    setMoving(appointment.booking_id)
+  }
+
+  const submitMove = async (appointment) => {
+    if (!/^\d{2}:\d{2}$/.test(moveTime)) {
+      setMoveError('Pick a time first')
       return
     }
-    setError(null)
+    setMoveError(null)
     try {
       await api.moveAppointment(
         appointment.booking_id,
-        new Date(`${date}T${input}:00`).toISOString(),
+        shopTimeToIso(date, moveTime),
         auth.token
       )
+      setMoving(null)
       reload()
     } catch (err) {
-      setError(err.message)
+      setMoveError(err.message)
     }
   }
 
@@ -127,22 +160,15 @@ export default function SchedulePage() {
     for (let h = OPEN_HOUR; h < CLOSE_HOUR; h += 1) {
       for (let m = 0; m < 60; m += STEP_MIN) {
         const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-        const start = new Date(`${date}T${label}:00`)
-        const end = new Date(start.getTime() + STEP_MIN * 60000)
-        const items = schedule.appointments.filter((a) => {
-          const startsAt = new Date(a.start_time)
-          return startsAt >= start && startsAt < end
-        })
-        quarterRows.push({ label, start, end, items })
+        const items = schedule.appointments.filter(
+          (a) => shopQuarterLabel(a.start_time, STEP_MIN) === label
+        )
+        quarterRows.push({ label, items })
       }
     }
   }
 
-  const currentLabel =
-    isToday &&
-    `${String(now.getHours()).padStart(2, '0')}:${String(
-      Math.floor(now.getMinutes() / STEP_MIN) * STEP_MIN
-    ).padStart(2, '0')}`
+  const currentLabel = isToday && shopQuarterLabel(now.toISOString(), STEP_MIN)
 
   return (
     <div className="container">
@@ -298,20 +324,52 @@ export default function SchedulePage() {
                             {a.status.replace('_', ' ')}
                           </span>
                           <div className="occupancy-detail-actions">
-                            <button
-                              type="button"
-                              className="btn btn-outline"
-                              onClick={() => handleMove(a)}
-                            >
-                              Move
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-danger-outline"
-                              onClick={() => handleRemove(a)}
-                            >
-                              Remove
-                            </button>
+                            {moving === a.booking_id ? (
+                              <>
+                                <input
+                                  className="input matrix-input"
+                                  type="time"
+                                  min="09:00"
+                                  max="17:30"
+                                  step="900"
+                                  value={moveTime}
+                                  onChange={(e) => setMoveTime(e.target.value)}
+                                  style={{ width: '7.5rem' }}
+                                />
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  onClick={() => submitMove(a)}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline"
+                                  onClick={() => setMoving(null)}
+                                >
+                                  Cancel
+                                </button>
+                                {moveError && <p className="error-text">{moveError}</p>}
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline"
+                                  onClick={() => startMove(a)}
+                                >
+                                  Move
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-danger-outline"
+                                  onClick={() => handleRemove(a)}
+                                >
+                                  Remove
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
