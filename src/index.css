@@ -2025,3 +2025,151 @@ textarea.input {
 .hours-range .matrix-num {
   width: 3.6rem;
 }
+
+/* ==================== the polish layer ====================
+   Motion, gradients and micro-interactions layered over the base theme.
+   Everything reads its colours from the tokens, so the seasonal palettes
+   and dark mode dress this layer automatically. All motion sits behind
+   prefers-reduced-motion. */
+
+/* Entrance choreography: pages breathe in; the hero rises line by line. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .container { animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .hero-eyebrow { animation: rise 0.55s 0.05s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .hero h1 { animation: rise 0.65s 0.16s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .hero p { animation: rise 0.65s 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .hero-rule {
+    animation:
+      rise 0.65s 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) both,
+      hero-shimmer 3.6s 1.2s ease-in-out infinite;
+  }
+}
+
+/* The italic word wears a living green-to-accent gradient. */
+.hero h1 em {
+  background: linear-gradient(100deg, var(--green-soft) 20%, var(--gold-dark) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* A longer rule that glints. */
+.hero-rule {
+  width: 110px;
+  background: linear-gradient(90deg, transparent, var(--gold) 35%, var(--gold-soft) 50%, var(--gold) 65%, transparent);
+  background-size: 220% 100%;
+}
+
+@keyframes hero-shimmer {
+  0%, 100% { background-position: 10% 0; }
+  50% { background-position: 90% 0; }
+}
+
+/* A second, greener glow deepens the hero's backdrop. */
+.hero {
+  background:
+    radial-gradient(ellipse 60% 100% at 50% 0%,
+      color-mix(in srgb, var(--gold) 16%, transparent), transparent),
+    radial-gradient(ellipse 50% 70% at 8% 100%,
+      color-mix(in srgb, var(--green) 9%, transparent), transparent),
+    radial-gradient(ellipse 50% 70% at 92% 100%,
+      color-mix(in srgb, var(--gold) 7%, transparent), transparent),
+    var(--cream-deep);
+}
+
+/* Buttons: a sheen sweeps across on hover; the gold one gets real depth. */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  transform: translateX(-130%);
+}
+
+.btn:hover::after {
+  transition: transform 0.55s ease;
+  transform: translateX(130%);
+}
+
+.btn:disabled::after {
+  display: none;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold-soft), var(--gold) 45%, var(--gold-dark));
+}
+
+/* Keyboard travellers get a clear accent ring. */
+.btn:focus-visible,
+.input:focus-visible,
+a:focus-visible,
+.collapse-head:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* The header closes with a gilded hairline. */
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+  opacity: 0.55;
+}
+
+/* The bottle's sparkle twinkles. */
+@media (prefers-reduced-motion: no-preference) {
+  .logo-sparkle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: logo-twinkle 2.8s ease-in-out infinite;
+  }
+
+  @keyframes logo-twinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.72); }
+  }
+}
+
+/* Branch cards: the arrow leans in with you. */
+.branch-card-cta {
+  transition: letter-spacing 0.2s ease, color 0.2s ease;
+}
+
+.branch-card:hover .branch-card-cta {
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+
+/* Service rows warm to the touch. */
+.service-row {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-row:hover {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
+  box-shadow: var(--shadow);
+}
+
+/* Even the page furniture wears the palette. */
+::selection {
+  background: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--gold) 65%, var(--border)) transparent;
+}

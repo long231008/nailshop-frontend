@@ -22,7 +22,11 @@ export default function Logo({ size = 30 }) {
       {/* gloss stripe */}
       <rect x="11.6" y="15.6" width="2.3" height="8.2" rx="1.15" fill="var(--gold-soft)" opacity="0.55" />
       {/* sparkle */}
-      <path d="M26.4 3.2 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1 z" fill="var(--gold)" />
+      <path
+        className="logo-sparkle"
+        d="M26.4 3.2 l1 2.5 2.5 1 -2.5 1 -1 2.5 -1 -2.5 -2.5 -1 2.5 -1 z"
+        fill="var(--gold)"
+      />
     </svg>
   )
 }
