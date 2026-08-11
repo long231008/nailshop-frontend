@@ -358,8 +358,9 @@ select {
   top: auto;
 }
 
-.season-decor-summer .season-particle:nth-child(odd) { top: 18%; }
-.season-decor-summer .season-particle:nth-child(even) { top: 58%; }
+.season-decor-summer .season-particle:nth-child(3n) { top: 14%; }
+.season-decor-summer .season-particle:nth-child(3n + 1) { top: 42%; }
+.season-decor-summer .season-particle:nth-child(3n + 2) { top: 68%; }
 
 @keyframes season-twinkle {
   0%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.7); }
