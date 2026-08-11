@@ -294,6 +294,8 @@ select {
 /* ---------- hero ---------- */
 
 .hero {
+  position: relative;
+  overflow: hidden;
   text-align: center;
   padding: 3.5rem 1rem 2.75rem;
   background:
@@ -301,6 +303,73 @@ select {
       color-mix(in srgb, var(--gold) 14%, transparent), transparent),
     var(--cream-deep);
   border-bottom: 1px solid var(--border);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- seasonal decorations on the hero ---------- */
+
+.season-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  color: var(--gold);
+}
+
+.season-motif {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: clamp(110px, 16vw, 170px);
+  height: auto;
+  opacity: 0.3;
+}
+
+.season-particle {
+  position: absolute;
+  top: -2.2rem;
+  line-height: 1;
+  opacity: 0;
+  animation-name: season-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.season-decor-spring .season-particle { color: #d98ca4; }
+.season-decor-summer .season-particle { color: color-mix(in srgb, var(--gold) 85%, #fff); }
+.season-decor-autumn .season-particle { color: #b8763c; }
+.season-decor-winter .season-particle { color: #9fc0dc; }
+
+@keyframes season-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: 0.85; }
+  50% { transform: translate3d(1.6rem, 9rem, 0) rotate(150deg); }
+  88% { opacity: 0.75; }
+  100% { transform: translate3d(-0.8rem, 19rem, 0) rotate(320deg); opacity: 0; }
+}
+
+/* Summer sparkles hang in the air and twinkle rather than fall. */
+.season-decor-summer .season-particle {
+  animation-name: season-twinkle;
+  top: auto;
+}
+
+.season-decor-summer .season-particle:nth-child(odd) { top: 18%; }
+.season-decor-summer .season-particle:nth-child(even) { top: 58%; }
+
+@keyframes season-twinkle {
+  0%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.7); }
+  50% { opacity: 0.8; transform: translate3d(0, -0.6rem, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-particle {
+    display: none;
+  }
 }
 
 .hero-eyebrow {

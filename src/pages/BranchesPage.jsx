@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import SeasonalDecor from '../components/SeasonalDecor'
 import { SEASON_LABELS, currentSeason } from '../season'
 
 const CATEGORY_SHORT_LABELS = {
@@ -34,6 +35,7 @@ export default function BranchesPage() {
   return (
     <>
       <section className="hero">
+        <SeasonalDecor />
         <span className="hero-eyebrow">
           {SEASON_LABELS[currentSeason()]} · Nails · Care · Head Spa
         </span>
