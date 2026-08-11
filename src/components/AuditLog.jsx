@@ -78,7 +78,7 @@ export default function AuditLog({ token }) {
     const days = Math.max(30, Number(pruneDays) || 730)
     if (
       !window.confirm(
-        `Delete audit entries older than ${days} days? Money records (payments, cancellations with deposits) are always kept.`
+        `Delete ALL audit entries older than ${days} days, money records included?`
       )
     )
       return
@@ -201,9 +201,10 @@ export default function AuditLog({ token }) {
           )}
         </div>
         <p className="muted" style={{ fontSize: '0.8rem' }}>
-          A nightly job also removes entries past the retention window automatically. Money
-          records — payments and cancellations carrying deposit facts — are never deleted by
-          either path. Deleted entries are gone for good.
+          These buttons delete anything, money records included — an admin&apos;s hand is
+          deliberate. The automatic nightly clean-up is the careful one: it removes entries past
+          the retention window but always keeps money records (payments, cancellations carrying
+          deposit facts). Deleted entries are gone for good.
         </p>
       </div>
     </section>
