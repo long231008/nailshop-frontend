@@ -316,6 +316,7 @@ select {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
   color: var(--gold);
 }
@@ -329,30 +330,51 @@ select {
   opacity: 0.3;
 }
 
+/* Each falling object is three layers of motion: the outer span drifts
+   straight down, the inner span swings side to side like something light on
+   the air, and the SVG itself can slowly spin (blossoms, leaves, flakes) or
+   flap its wings (butterflies). Layered, the fall looks organic. */
 .season-particle {
   position: absolute;
-  top: -2.2rem;
-  line-height: 1;
+  top: -2.4rem;
+  line-height: 0;
   opacity: 0;
   animation-name: season-fall;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 
-.season-decor-spring .season-particle { color: #d98ca4; }
-.season-decor-summer .season-particle { color: color-mix(in srgb, var(--gold) 85%, #fff); }
-.season-decor-autumn .season-particle { color: #b8763c; }
-.season-decor-winter .season-particle { color: #9fc0dc; }
-
-@keyframes season-fall {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
-  8% { opacity: 0.85; }
-  50% { transform: translate3d(1.6rem, 9rem, 0) rotate(150deg); }
-  88% { opacity: 0.75; }
-  100% { transform: translate3d(-0.8rem, 19rem, 0) rotate(320deg); opacity: 0; }
+.season-inner {
+  display: inline-block;
+  animation: season-sway 2.6s ease-in-out infinite alternate;
 }
 
-/* Summer sparkles hang in the air and twinkle rather than fall. */
+.season-spin {
+  animation: season-spin 7s linear infinite;
+}
+
+.season-particle:nth-child(2n) .season-spin {
+  animation-duration: 10s;
+  animation-direction: reverse;
+}
+
+@keyframes season-fall {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  7% { opacity: 0.9; }
+  88% { opacity: 0.75; }
+  100% { transform: translate3d(0, 21rem, 0); opacity: 0; }
+}
+
+@keyframes season-sway {
+  from { transform: translateX(-1.1rem) rotate(-12deg); }
+  to { transform: translateX(1.1rem) rotate(12deg); }
+}
+
+@keyframes season-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Summer: sparkles hang in the air and twinkle, butterflies flutter about. */
 .season-decor-summer .season-particle {
   animation-name: season-twinkle;
   top: auto;
@@ -362,9 +384,38 @@ select {
 .season-decor-summer .season-particle:nth-child(3n + 1) { top: 42%; }
 .season-decor-summer .season-particle:nth-child(3n + 2) { top: 68%; }
 
+.season-decor-summer .season-inner { animation: none; }
+
+.season-decor-summer .season-particle-butterfly {
+  animation-name: season-float;
+  animation-timing-function: ease-in-out;
+}
+
+.bf-wing {
+  transform-box: fill-box;
+  animation: season-flap 0.5s ease-in-out infinite alternate;
+}
+
+.bf-wing-left { transform-origin: 100% 50%; }
+.bf-wing-right { transform-origin: 0% 50%; }
+
+.season-particle:nth-child(2n) .bf-wing { animation-duration: 0.62s; }
+
+@keyframes season-flap {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0.55); }
+}
+
 @keyframes season-twinkle {
   0%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.7); }
   50% { opacity: 0.8; transform: translate3d(0, -0.6rem, 0) scale(1); }
+}
+
+@keyframes season-float {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.9; }
+  25% { transform: translate3d(1.4rem, -1.1rem, 0); }
+  50% { transform: translate3d(3rem, 0.3rem, 0); opacity: 1; }
+  75% { transform: translate3d(1.3rem, 1.3rem, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
